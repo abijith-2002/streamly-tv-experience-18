@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
@@ -134,6 +135,7 @@ private fun DefaultPosterCard(
 
     var focused by remember { mutableStateOf(false) }
     val cardShape = RoundedCornerShape(d.radiusSm)
+    // Focus ring uses theme accent at high alpha for strong contrast on dark card/background
     val focusRingColor = c.accent.copy(alpha = 0.85f)
     val cardBorderColor = if (focused) focusRingColor else Color.Transparent
 
@@ -146,6 +148,7 @@ private fun DefaultPosterCard(
             .onFocusChanged { focused = it.isFocused }
             .semantics {
                 role = Role.Button
+                // Use the content title for TalkBack label
                 contentDescription = card.title
             }
             .clickable(
@@ -158,7 +161,7 @@ private fun DefaultPosterCard(
         if (card.imageResId != null) {
             androidx.compose.foundation.Image(
                 painter = painterResource(id = card.imageResId),
-                contentDescription = card.title,
+                contentDescription = card.title, // Meaningful image; label for TalkBack
                 modifier = Modifier
                     .width(width)
                     .height(s(posterH))
@@ -183,7 +186,7 @@ private fun DefaultPosterCard(
             )
         }
 
-        // Progress bar inside poster
+        // Progress bar inside poster (decorative; not read by TalkBack)
         Box(
             modifier = Modifier
                 .offset(x = s(progressLeft), y = s(progressTop))
@@ -289,6 +292,7 @@ private fun TvChannelCard(
 
     // Focus and ring
     var focused by remember { mutableStateOf(false) }
+    // Use theme accent at high alpha for strong contrast on dark background
     val ringColor = c.accent.copy(alpha = 0.85f)
     val borderColor = if (focused) ringColor else Color.Transparent
     val cardShape = RoundedCornerShape(d.radiusMd)
@@ -314,7 +318,7 @@ private fun TvChannelCard(
         if (card.imageResId != null) {
             androidx.compose.foundation.Image(
                 painter = painterResource(id = card.imageResId),
-                contentDescription = card.title,
+                contentDescription = card.title, // Meaningful image; provide label
                 modifier = Modifier
                     .size(width = s(posterW), height = s(posterH))
                     .clip(cardShape),
@@ -399,7 +403,7 @@ private fun TvChannelCard(
             )
         )
 
-        // Small progress track under poster
+        // Small progress track under poster (decorative)
         val ratio = card.progress?.ratio
             ?: (80f / progW).coerceIn(0f, 1f)
         val fillW = (progW - progInset * 2f) * ratio
@@ -424,13 +428,14 @@ private fun TvChannelCard(
             )
         }
 
-        // Channel icon (simple circle placeholder)
+        // Channel icon (simple circle placeholder) - decorative; do not announce
         if (showChannelIcon) {
             Box(
                 modifier = Modifier
                     .offset(x = s(iconLeft), y = s(iconTop))
                     .size(s(iconSize))
                     .background(color = c.danger, shape = CircleShape)
+                    .clearAndSetSemantics { /* decorative */ }
             )
         }
     }

@@ -16,6 +16,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.semantics.isTraversalGroup
+import androidx.compose.ui.semantics.traversalIndex
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -35,6 +38,7 @@ import com.android.streamly.ui.theme.StreamlyTheme
  *   - "Seguí viendo": first card 474x329, others 412x312, first gap 9px then 40px
  *   - "Canales de TV": cards 745x212 (second can be 221px), first gap 0px then 82px
  * - Focusable cards apply up/down focus destinations for predictable TV navigation
+ * - Accessibility: Each rail is a traversal group and each card is assigned a traversalIndex matching DPAD order
  *
  * Parameters:
  * - section: the rail section data
@@ -42,6 +46,7 @@ import com.android.streamly.ui.theme.StreamlyTheme
  * - entryFocusRequester: optional FocusRequester attached to the first card in the row (used by parent to target this rail)
  * - upDestination: FocusRequester to move to when DPAD_UP is pressed on any card (e.g., hero)
  * - downDestination: FocusRequester to move to when DPAD_DOWN is pressed on any card (e.g., next rail or FocusRequester.Cancel)
+ * - traversalGroupIndex: Float index for TalkBack traversal ordering of the rail among sibling groups
  */
 @Composable
 fun HomeRail(
@@ -49,7 +54,8 @@ fun HomeRail(
     modifier: Modifier = Modifier,
     entryFocusRequester: FocusRequester? = null,
     upDestination: FocusRequester? = null,
-    downDestination: FocusRequester? = null
+    downDestination: FocusRequester? = null,
+    traversalGroupIndex: Float = 0f
 ) {
     val d = StreamlyTheme.dimens
     val t = StreamlyTheme.typography
@@ -98,6 +104,11 @@ fun HomeRail(
         Column(
             modifier = Modifier
                 .padding(start = leftOffset)
+                .semantics {
+                    // Order rails top-to-bottom for TalkBack consistent with D-pad
+                    isTraversalGroup = true
+                    traversalIndex = traversalGroupIndex
+                }
         ) {
             // Section title
             BasicText(
@@ -134,6 +145,10 @@ fun HomeRail(
                         .focusProperties {
                             up = upDestination ?: FocusRequester.Default
                             down = downDestination ?: FocusRequester.Default
+                        }
+                        .semantics {
+                            // Ensure each card is announced left-to-right in order
+                            traversalIndex = index.toFloat()
                         }
 
                     if (index == 0 && entryFocusRequester != null) {

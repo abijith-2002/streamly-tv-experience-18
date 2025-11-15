@@ -29,7 +29,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
@@ -118,6 +120,9 @@ fun HomeHero(
                 // Root A11y description for the hero section
                 val label = hero?.title ?: "Destacado"
                 contentDescription = "Destacado: $label"
+                // Ensure TalkBack reads the hero after header and before rails
+                isTraversalGroup = true
+                traversalIndex = 1f
             }
     ) {
         // Compute scale from available width using 1920 baseline to preserve pixel accuracy.
@@ -159,12 +164,12 @@ fun HomeHero(
                 if (hero?.imageResId != null) {
                     Image(
                         painter = painterResource(id = hero.imageResId),
-                        contentDescription = hero.title,
+                        contentDescription = hero.title, // Meaningful image; provide label for TalkBack
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
                 } else {
-                    // Fallback gradient when no image provided
+                    // Fallback gradient when no image provided (decorative background)
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -179,7 +184,7 @@ fun HomeHero(
                             )
                     )
                 }
-                // Bottom gradient for legibility over imagery
+                // Bottom gradient for legibility over imagery (decorative)
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -240,6 +245,7 @@ fun HomeHero(
             var ctaFocused by remember { mutableStateOf(false) }
 
             val ctaShape = RoundedCornerShape(s(ctaRadius))
+            // Focus ring uses theme accent at high alpha for strong contrast on dark background
             val ringColor = c.accent.copy(alpha = 0.85f)
             val ctaBg = if (ctaFocused) c.accent.copy(alpha = 0.95f) else c.accent
 
@@ -253,6 +259,8 @@ fun HomeHero(
                         role = Role.Button
                         val label = hero?.title ?: "Destacado"
                         contentDescription = "Ver ahora: $label"
+                        // CTA is the primary focusable inside hero
+                        traversalIndex = 0f
                     }
                     .focusRequester(ctaFR)
                     .focusable()

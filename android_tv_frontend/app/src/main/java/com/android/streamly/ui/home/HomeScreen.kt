@@ -112,7 +112,9 @@ fun HomeScreen(
                             // Attach entry FocusRequester to the first card in each rail
                             entryFocusRequester = railEntryFRs[index],
                             upDestination = upDest,
-                            downDestination = downDest
+                            downDestination = downDest,
+                            // Ensure TalkBack reads rails top-to-bottom consistent with D-pad traversal
+                            traversalGroupIndex = 2f + index.toFloat()
                         )
                     }
                 }

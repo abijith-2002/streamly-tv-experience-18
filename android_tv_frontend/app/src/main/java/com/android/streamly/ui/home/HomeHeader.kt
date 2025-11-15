@@ -32,9 +32,11 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -137,14 +139,22 @@ fun HomeHeader(
     val firstTabFR = firstTabExternalFR ?: (internalTabFRs.firstOrNull() ?: FocusRequester.Default)
     val lastTabFR = lastTabExternalFR ?: (internalTabFRs.lastOrNull() ?: FocusRequester.Default)
 
-    // Root header: focus group container to scope directional nav within the header
+    // Traversal order within header (TalkBack): Search (0), Tabs (1..N), Avatar (N+1)
+    val avatarTraversalIndex = 1f + items.size.toFloat()
+
+    // Root header: focus group container to scope directional nav within the header, and traversal group for TalkBack order
     Box(
         modifier = modifier
             .focusGroup()
             .width(headerW)
             .height(headerH)
+            .semantics {
+                // Ensure TalkBack starts at header as a group and reads children in DPAD order
+                isTraversalGroup = true
+                traversalIndex = 0f
+            }
     ) {
-        // Logo placeholder group
+        // Logo placeholder group (non-interactive heading-like visual)
         Box(
             modifier = Modifier
                 .offset(x = 0.dp, y = 15.8129.dp)
@@ -189,6 +199,7 @@ fun HomeHeader(
 
             // Search button with focus ring
             var searchFocused by remember { mutableStateOf(false) }
+            // Focus ring uses theme accent at high alpha for strong contrast on dark background
             val ringColor = c.accent.copy(alpha = 0.85f)
             Box(
                 modifier = Modifier
@@ -198,6 +209,7 @@ fun HomeHeader(
                     .semantics {
                         role = Role.Button
                         contentDescription = "Buscar"
+                        traversalIndex = 0f
                     }
                     .focusRequester(searchFR)
                     .focusable()
@@ -216,7 +228,7 @@ fun HomeHeader(
                     ) { onSearchClick() }
                     .background(color = Color.Transparent)
             ) {
-                // Draw a simple magnifying glass to avoid external assets
+                // Draw a simple magnifying glass to avoid external assets (decorative)
                 Canvas(
                     modifier = Modifier
                         .size(22.dp)
@@ -267,6 +279,7 @@ fun HomeHeader(
                     .semantics {
                         role = Role.Button
                         contentDescription = "Perfil"
+                        traversalIndex = avatarTraversalIndex
                     }
                     .focusRequester(avatarFR)
                     .focusable()
@@ -342,6 +355,8 @@ fun HomeHeader(
                             selected = isActive
                             contentDescription = item.title
                             stateDescription = if (isActive) "seleccionada" else "no seleccionada"
+                            // Ensure TalkBack reads tabs left-to-right in the same order as D-pad
+                            traversalIndex = 1f + index.toFloat()
                         }
                         .then(if (frForTab != null) Modifier.focusRequester(frForTab) else Modifier)
                         .focusable()
