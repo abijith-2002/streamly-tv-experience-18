@@ -114,25 +114,48 @@ fun HomeHeader(
                 traversalIndex = 0f
             }
     ) {
-        // Brand label "Claro video" positioned absolutely within the header container
-        // This is not focusable and has a simple label semantics.
-        BasicText(
-            text = "Claro video",
-            modifier = Modifier
-                .offset(x = 44.36.dp, y = 25.9063.dp)
-                .semantics {
-                    // Non-interactive label; keep in a11y tree as static text
-                    contentDescription = "Claro video"
+        // Compute dynamic horizontal centering for "Claro video" between left edge and navbar's left edge.
+        // We keep the navbar fixed at 579.5.dp x 32.dp and centered; then compute the midpoint to place the label centered on it.
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            // Available width inside safe margins (since HomeScaffold applies padding)
+            val availableW = this.maxWidth
+            // Navbar is centered; its left edge is (availableW - navWidth) / 2
+            val navLeft = (availableW - navWidth) / 2
+            // Midpoint between left edge (0.dp) and navbar's left edge
+            val midBetweenLeftAndNav = navLeft / 2
+
+            // Track measured text width to center the label at the midpoint
+            var labelTextWidthPx by remember { mutableStateOf(0) }
+            val labelTextWidthDp: Dp = with(density) { labelTextWidthPx.toDp() }
+
+            // Preserve vertical offset and font size requirements
+            val labelYOffset = 25.9063.dp
+
+            BasicText(
+                text = "Claro video",
+                modifier = Modifier
+                    // Center the label horizontally around the computed midpoint
+                    .offset(
+                        x = (midBetweenLeftAndNav - (labelTextWidthDp / 2)).coerceAtLeast(0.dp),
+                        y = labelYOffset
+                    )
+                    .semantics {
+                        // Non-interactive label; keep in a11y tree as static text
+                        contentDescription = "Claro video"
+                    },
+                onTextLayout = { layout ->
+                    labelTextWidthPx = layout.size.width
                 },
-            style = t.titleL.merge(
-                TextStyle(
-                    color = c.textPrimary,
-                    textAlign = TextAlign.Start,
-                    // Requirement: set this separate label to 15.sp
-                    fontSize = 15.sp
+                style = t.titleL.merge(
+                    TextStyle(
+                        color = c.textPrimary,
+                        textAlign = TextAlign.Start,
+                        // Requirement: set this separate label to 15.sp
+                        fontSize = 15.sp
+                    )
                 )
             )
-        )
+        }
 
         // Centered TopNav background capsule with exact width/height
         Box(
