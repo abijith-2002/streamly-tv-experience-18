@@ -37,6 +37,7 @@ import com.android.streamly.ui.theme.StreamlyTheme
  * - hero: Current hero item
  * - rails: Content rail sections below the hero
  * - contentPadding: Optional padding for content insets
+ * - onTabSelected: Callback when a header tab is selected, used to trigger navigation
  */
 @Composable
 fun HomeScreen(
@@ -44,7 +45,8 @@ fun HomeScreen(
     activeIndex: Int,
     hero: HeroItem?,
     rails: List<RailSection>,
-    contentPadding: PaddingValues = PaddingValues()
+    contentPadding: PaddingValues = PaddingValues(),
+    onTabSelected: (index: Int, item: NavItem) -> Unit = { _, _ -> }
 ) {
     val spacing = StreamlyTheme.dimens
 
@@ -67,7 +69,9 @@ fun HomeScreen(
                     // Expose first tab FocusRequester to be targeted by hero/rails
                     firstTabExternalFR = headerFirstTabFR,
                     // Auto focus to first tab when screen loads
-                    autoFocusFirstTab = true
+                    autoFocusFirstTab = true,
+                    // Forward tab selection to caller for navigation
+                    onTabSelected = onTabSelected
                 )
             },
             content = {
