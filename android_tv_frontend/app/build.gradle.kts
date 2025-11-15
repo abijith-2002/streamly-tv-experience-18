@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.android_tv_frontend"
+    namespace = "com.android.streamly"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.android_tv_frontend"
+        applicationId = "com.android.streamly"
         minSdk = 21
         targetSdk = 34
         versionCode = 1

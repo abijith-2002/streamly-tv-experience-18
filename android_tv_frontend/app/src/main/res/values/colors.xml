@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- TV optimized colors -->
-    <color name="tv_background">#000000</color>
+    <color name="tv_background">#121212</color>
+    <color name="colorBackground">#121212</color>
     <color name="tv_overlay">#CC000000</color>
     <color name="tv_primary">#FFFFFF</color>
     <color name="tv_secondary">#CCCCCC</color>

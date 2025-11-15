@@ -1,4 +1,4 @@
-package com.example.android_tv_frontend
+package com.android.streamly
 
 import org.junit.Test
 import org.junit.Assert.*

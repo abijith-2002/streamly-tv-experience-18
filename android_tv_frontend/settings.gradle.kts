@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "android_tv_frontend"
+rootProject.name = "Streamly"
 include(":app")

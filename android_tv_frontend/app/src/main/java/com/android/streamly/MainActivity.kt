@@ -1,4 +1,4 @@
-package com.example.android_tv_frontend
+package com.android.streamly
 
 import android.os.Bundle
 import androidx.fragment.app.FragmentActivity
@@ -16,10 +16,11 @@ class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        
+
         titleText = findViewById(R.id.title_text)
-        titleText.text = "android_tv_frontend"
-        
+        // Use the app_name string resource to present the title
+        titleText.text = getString(R.string.app_name)
+
         // TODO: Initialize your rating screen components here
         // setupRatingOverlay()
     }
