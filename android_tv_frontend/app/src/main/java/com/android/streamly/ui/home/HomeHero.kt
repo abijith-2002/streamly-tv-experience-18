@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.traversalIndex
@@ -152,6 +153,7 @@ fun HomeHero(
                             )
                         )
                     )
+                    .clearAndSetSemantics { /* decorative */ }
             )
 
             // MAIN HERO SLICE: Positioned at left=88, width=1744, height=444 (scaled).
@@ -182,6 +184,7 @@ fun HomeHero(
                                     )
                                 )
                             )
+                            .clearAndSetSemantics { /* decorative */ }
                     )
                 }
                 // Bottom gradient for legibility over imagery (decorative)
@@ -196,6 +199,7 @@ fun HomeHero(
                                 )
                             )
                         )
+                        .clearAndSetSemantics { /* decorative */ }
                 )
             }
 
@@ -213,6 +217,7 @@ fun HomeHero(
                             )
                         )
                     )
+                    .clearAndSetSemantics { /* decorative */ }
             )
 
             // Overlay: Title (typo-25 mapping -> titleXL)

@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
@@ -54,6 +55,10 @@ import com.android.streamly.ui.theme.StreamlyTheme
  * - D-Pad navigation is wired: Search <-> Tabs <-> Avatar, with proper left/right traversal
  * - Down navigation from header elements moves to the hero (downDestination) when provided
  * - Exposes ability to auto-focus first tab and to attach external FocusRequesters to first/last tabs
+ *
+ * Accessibility:
+ * - Decorative shapes (backgrounds, halos, active capsules) are removed from the a11y tree.
+ * - Traversal group and indexes ensure TalkBack follows the same order as DPAD.
  *
  * Parameters:
  * - items: List of NavItem representing the top nav
@@ -160,6 +165,7 @@ fun HomeHeader(
                 .offset(x = 0.dp, y = 15.8129.dp)
                 .width(169.637.dp)
                 .height(34.3558.dp)
+                .clearAndSetSemantics { /* decorative */ }
         ) {
             BasicText(
                 text = "Claro video",
@@ -179,6 +185,7 @@ fun HomeHeader(
                 .width(activeCapsuleW)
                 .height(activeCapsuleH)
                 .background(color = c.accent.copy(alpha = 0.35f), shape = RoundedCornerShape(activeCapsuleRadius))
+                .clearAndSetSemantics { /* decorative */ }
         )
 
         // TopNav container
@@ -188,13 +195,14 @@ fun HomeHeader(
                 .width(topNavW)
                 .height(topNavH)
         ) {
-            // Background capsule
+            // Background capsule (decorative)
             Box(
                 modifier = Modifier
                     .offset(x = topNavBgLeft, y = topNavBgTop)
                     .width(topNavBgW)
                     .height(topNavBgH)
                     .background(color = c.surface2, shape = RoundedCornerShape(topNavBgRadius))
+                    .clearAndSetSemantics { /* decorative */ }
             )
 
             // Search button with focus ring
@@ -233,6 +241,7 @@ fun HomeHeader(
                     modifier = Modifier
                         .size(22.dp)
                         .offset(x = 7.dp, y = 7.dp)
+                        .clearAndSetSemantics { /* decorative */ }
                 ) {
                     // Lens
                     drawCircle(
@@ -257,7 +266,7 @@ fun HomeHeader(
                 }
             }
 
-            // Avatar focus halo (subtle when not focused)
+            // Avatar focus halo (subtle when not focused) - decorative
             var avatarFocused by remember { mutableStateOf(false) }
             val haloAlpha = if (avatarFocused) 0.2f else 0.0001f
             Box(
@@ -266,6 +275,7 @@ fun HomeHeader(
                     .size(avatarHaloSize)
                     .clip(CircleShape)
                     .background(color = c.accent.copy(alpha = haloAlpha))
+                    .clearAndSetSemantics { /* decorative */ }
             )
 
             // Avatar (round) with focus ring
@@ -322,7 +332,7 @@ fun HomeHeader(
                 }
                 val bgOnFocusAlpha = if (hasFocus) 0.12f else 0f
 
-                // Focus background and ring capsule behind label
+                // Focus background and ring capsule behind label (decorative backdrop)
                 Box(
                     modifier = Modifier
                         .offset(x = tabX - 16.dp, y = 10.dp) // 16dp padding around label for focus background
@@ -337,6 +347,7 @@ fun HomeHeader(
                             color = if (hasFocus) ringColor else Color.Transparent,
                             shape = RoundedCornerShape(activeCapsuleRadius)
                         )
+                        .clearAndSetSemantics { /* decorative */ }
                 )
 
                 val frForTab = when {

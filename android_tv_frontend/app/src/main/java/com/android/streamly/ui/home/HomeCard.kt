@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
-
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -31,6 +30,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.clip
+
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -54,6 +54,12 @@ import com.android.streamly.ui.theme.StreamlyTheme
  * - Info column left offset: 408px; Title/meta/Live badge/time offsets per assets (scaled).
  * - Live badge: 94x32 with radius ~3.8px and typo-27.
  * - Small progress under poster: 207x10.4 track with ~0.8px insets for fill.
+ *
+ * Accessibility:
+ * - Posters are meaningful images and are labeled with the card title.
+ * - Decorative shapes, badges, and progress bars are removed from the a11y tree.
+ * - Root card node exposes Role.Button and contentDescription with the title (and "en vivo" when applicable).
+ * - Semantics are merged at the card root to avoid duplicate announcements.
  *
  * Parameters:
  * - card: data for the card (title used for labels)
@@ -146,7 +152,7 @@ private fun DefaultPosterCard(
             .background(color = Color.Transparent, shape = cardShape)
             .focusable()
             .onFocusChanged { focused = it.isFocused }
-            .semantics {
+            .semantics(mergeDescendants = true) {
                 role = Role.Button
                 // Use the content title for TalkBack label
                 contentDescription = card.title
@@ -183,6 +189,7 @@ private fun DefaultPosterCard(
                         ),
                         shape = cardShape
                     )
+                    .clearAndSetSemantics { /* decorative */ }
             )
         }
 
@@ -191,12 +198,14 @@ private fun DefaultPosterCard(
             modifier = Modifier
                 .offset(x = s(progressLeft), y = s(progressTop))
                 .size(width = s(progressTrackW), height = s(progressTrackH))
+                .clearAndSetSemantics { /* decorative */ }
         ) {
             // Track
             Box(
                 modifier = Modifier
                     .size(width = s(progressTrackW), height = s(progressTrackH))
                     .background(color = c.track, shape = RoundedCornerShape(s(progressTrackH / 2f)))
+                    .clearAndSetSemantics { /* decorative */ }
             )
             // Fill
             Box(
@@ -204,21 +213,25 @@ private fun DefaultPosterCard(
                     .offset(x = s(progressFillLeft), y = s(progressFillTop))
                     .size(width = s(progressFillW), height = s(progressFillH))
                     .background(color = c.progress, shape = RoundedCornerShape(s(progressFillH / 2f)))
+                    .clearAndSetSemantics { /* decorative */ }
             )
         }
 
-        // Name box and title
+        // Name box and title (decorative container; text merges into parent label)
         Box(
             modifier = Modifier
                 .offset(x = s(nameBoxLeft), y = s(nameBoxTop))
                 .size(width = s(nameBoxW), height = s(nameBoxH))
                 .background(color = c.surface, shape = RoundedCornerShape(0.dp))
+                .clearAndSetSemantics { /* decorative */ }
         )
 
         BasicText(
             text = card.title,
             modifier = Modifier
-                .offset(x = s(nameBoxLeft + 16f), y = s(nameBoxTop + 24f)),
+                .offset(x = s(nameBoxLeft + 16f), y = s(nameBoxTop + 24f))
+                // Text is already included by parent semantics label; prevent duplicate read
+                .clearAndSetSemantics { /* merged into parent contentDescription */ },
             style = t.labelL.merge(
                 TextStyle(
                     color = c.onSurface,
@@ -297,6 +310,9 @@ private fun TvChannelCard(
     val borderColor = if (focused) ringColor else Color.Transparent
     val cardShape = RoundedCornerShape(d.radiusMd)
 
+    // Root label - include "en vivo" when badge is shown
+    val rootLabel = if (showLiveBadge) "${card.title}, en vivo" else card.title
+
     Box(
         modifier = modifier
             .size(width = width, height = height)
@@ -304,9 +320,9 @@ private fun TvChannelCard(
             .background(color = Color.Transparent, shape = cardShape)
             .focusable()
             .onFocusChanged { focused = it.isFocused }
-            .semantics {
+            .semantics(mergeDescendants = true) {
                 role = Role.Button
-                contentDescription = card.title
+                contentDescription = rootLabel
             }
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
@@ -338,15 +354,17 @@ private fun TvChannelCard(
                         ),
                         shape = cardShape
                     )
+                    .clearAndSetSemantics { /* decorative */ }
             )
         }
 
         // Info column texts
-        // Title
+        // Title (rendered visually, semantics merged into parent label)
         BasicText(
             text = card.title,
             modifier = Modifier
-                .offset(x = s(infoLeft + 0f), y = s(infoTop + titleTop)),
+                .offset(x = s(infoLeft + 0f), y = s(infoTop + titleTop))
+                .clearAndSetSemantics { /* merged into parent contentDescription */ },
             style = t.titleXL.merge(
                 TextStyle(
                     color = c.textPrimary,
@@ -355,11 +373,12 @@ private fun TvChannelCard(
             )
         )
 
-        // Channel string placeholder (e.g., "004 | Claro sports")
+        // Channel string placeholder (e.g., "004 | Claro sports") - not essential for SR
         BasicText(
             text = "004 | Claro sports",
             modifier = Modifier
-                .offset(x = s(infoLeft + 1f), y = s(infoTop + channelTop)),
+                .offset(x = s(infoLeft + 1f), y = s(infoTop + channelTop))
+                .clearAndSetSemantics { /* decorative text */ },
             style = t.bodyL.merge(
                 TextStyle(
                     color = c.textSecondary,
@@ -368,7 +387,7 @@ private fun TvChannelCard(
             )
         )
 
-        // "EN VIVO" badge
+        // "EN VIVO" badge (already appended to parent label when present)
         if (showLiveBadge) {
             val badgeShape = RoundedCornerShape(s(liveRadius))
             Box(
@@ -376,11 +395,13 @@ private fun TvChannelCard(
                     .offset(x = s(infoLeft + liveLeft), y = s(infoTop + liveTop))
                     .size(width = s(liveW), height = s(liveH))
                     .background(color = c.live, shape = badgeShape)
+                    .clearAndSetSemantics { /* decorative */ }
             )
             BasicText(
                 text = "EN VIVO",
                 modifier = Modifier
-                    .offset(x = s(infoLeft + liveLeft + 6f), y = s(infoTop + liveTop + 5f)),
+                    .offset(x = s(infoLeft + liveLeft + 6f), y = s(infoTop + liveTop + 5f))
+                    .clearAndSetSemantics { /* merged into parent via root label */ },
                 style = t.badge.merge(
                     TextStyle(
                         color = c.onAccent,
@@ -390,11 +411,12 @@ private fun TvChannelCard(
             )
         }
 
-        // Time window
+        // Time window - visual only for SR (root label sufficient)
         BasicText(
             text = "11:30 - 12:30",
             modifier = Modifier
-                .offset(x = s(infoLeft + 1f), y = s(infoTop + timeTop)),
+                .offset(x = s(infoLeft + 1f), y = s(infoTop + timeTop))
+                .clearAndSetSemantics { /* decorative text */ },
             style = t.bodyL.merge(
                 TextStyle(
                     color = c.textSecondary,
@@ -412,12 +434,14 @@ private fun TvChannelCard(
             modifier = Modifier
                 .offset(x = s(progLeft), y = s(progTop))
                 .size(width = s(progW), height = s(progH))
+                .clearAndSetSemantics { /* decorative */ }
         ) {
             // Track
             Box(
                 modifier = Modifier
                     .size(width = s(progW), height = s(progH))
                     .background(color = c.track, shape = RoundedCornerShape(s(2.4f)))
+                    .clearAndSetSemantics { /* decorative */ }
             )
             // Fill
             Box(
@@ -425,6 +449,7 @@ private fun TvChannelCard(
                     .offset(x = s(progInset), y = s(progInset))
                     .size(width = s(fillW), height = s(progH - progInset * 2f))
                     .background(color = c.progress, shape = RoundedCornerShape(s(1.6f)))
+                    .clearAndSetSemantics { /* decorative */ }
             )
         }
 
