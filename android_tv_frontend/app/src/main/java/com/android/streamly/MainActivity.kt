@@ -38,9 +38,8 @@ class MainActivity : FragmentActivity() {
             ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed
         )
         composeView.setContent {
-            // Top navigation model (ensure "Claro video" is present and rendered)
+            // Top navigation model (exclude "Claro video" from tabs; it will be rendered as a separate label)
             val nav = listOf(
-                NavItem(id = "clarovideo", title = "Claro video"),
                 NavItem(id = "inicio", title = "Inicio", active = true),
                 NavItem(id = "peliculas", title = "Películas"),
                 NavItem(id = "series", title = "Series"),

@@ -49,10 +49,11 @@ import com.android.streamly.ui.theme.StreamlyTheme
  * PUBLIC_INTERFACE
  * HomeHeader
  * Resized and centered header for Android TV:
- * - Top nav container is fixed to 579.5dp x 32dp, horizontally centered
+ * - Top nav container is fixed to 579.5dp x 32dp, horizontally centered (no clipping)
  * - Internal elements scaled to fit the 32dp height (capsule ~28dp with 14dp radius)
  * - Tabs spaced relatively within the fixed width (no hard absolute offsets)
- * - "Claro video" is rendered as a tab (must be present in items list)
+ * - "Claro video" is NOT part of the tabs; it is rendered as a separate label positioned at
+ *   x=44.36.dp and y=25.9063.dp relative to the header container.
  *
  * Accessibility:
  * - Decorative shapes are removed from the a11y tree
@@ -113,6 +114,24 @@ fun HomeHeader(
                 traversalIndex = 0f
             }
     ) {
+        // Brand label "Claro video" positioned absolutely within the header container
+        // at the precise offsets requested. This is not focusable and has a simple label semantics.
+        BasicText(
+            text = "Claro video",
+            modifier = Modifier
+                .offset(x = 44.36.dp, y = 25.9063.dp)
+                .semantics {
+                    // Non-interactive label; keep in a11y tree as static text
+                    contentDescription = "Claro video"
+                },
+            style = t.titleL.merge(
+                TextStyle(
+                    color = c.textPrimary,
+                    textAlign = TextAlign.Start
+                )
+            )
+        )
+
         // Centered TopNav background capsule with exact width/height
         Box(
             modifier = Modifier
