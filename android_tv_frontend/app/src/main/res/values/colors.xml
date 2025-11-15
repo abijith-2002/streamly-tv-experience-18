@@ -4,9 +4,21 @@
     <color name="tv_background">#121212</color>
     <color name="colorBackground">#121212</color>
     <color name="tv_overlay">#CC000000</color>
+
+    <!-- Primary text on dark -->
     <color name="tv_primary">#FFFFFF</color>
     <color name="tv_secondary">#CCCCCC</color>
-    <color name="tv_accent">#2196F3</color>
+
+    <!-- Accent updated to Streamly red -->
+    <color name="tv_accent">#E1251B</color>
+
+    <!-- Button states (kept referencing theme text colors where possible) -->
     <color name="tv_button_focused">#FFFFFF</color>
     <color name="tv_button_normal">#80FFFFFF</color>
+
+    <!-- Optional Material-like semantic mapping to ensure wide attribute support -->
+    <color name="colorPrimary">#E1251B</color>
+    <color name="colorSecondary">#E1251B</color>
+    <color name="colorOnPrimary">#FFFFFF</color>
+    <color name="colorOnSecondary">#FFFFFF</color>
 </resources>

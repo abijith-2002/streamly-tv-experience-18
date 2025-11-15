@@ -2,10 +2,15 @@
 <resources>
     <!-- Base application theme for Android TV -->
     <style name="AppTheme" parent="Theme.Leanback">
-        <!-- Dark background and primary accent -->
+        <!-- Keep dark background -->
         <item name="android:windowBackground">@color/tv_background</item>
-        <item name="android:colorPrimary">@color/tv_accent</item>
         <item name="android:colorBackground">@color/tv_background</item>
+
+        <!-- Accent applied using supported attributes in Leanback -->
+        <item name="android:colorPrimary">@color/tv_accent</item>
+
+        <!-- Legacy accent attribute for wider widget compatibility -->
+        <item name="android:colorAccent">@color/tv_accent</item>
     </style>
 
     <!-- Splash theme: ONLY dark background, no splash icons or animated assets -->
