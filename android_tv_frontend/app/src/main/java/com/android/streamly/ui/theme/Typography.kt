@@ -77,18 +77,18 @@ val DefaultTvTypography = TvTypography(
     nav = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.Normal, // 400
-        fontSize = 29.sp,
-        lineHeight = 33.98.sp,
-        // 0.3816 px on 29px font ≈ 0.01316 em
-        letterSpacing = pxToEm(letterPx = 0.3816f, fontSizePx = 29f)
+        fontSize = 26.sp, // reduced ~3sp to fit within centered bar
+        lineHeight = 30.sp,
+        // Recompute letterSpacing proportionally for 26px base: 0.3816px on 26px ≈ 0.01468em
+        letterSpacing = pxToEm(letterPx = 0.3816f, fontSizePx = 26f)
     ),
     navActive = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.Bold, // 700
-        fontSize = 29.sp,
-        lineHeight = 32.sp,
-        // 0.3816 px on 29px font ≈ 0.01316 em
-        letterSpacing = pxToEm(letterPx = 0.3816f, fontSizePx = 29f)
+        fontSize = 26.sp, // reduced ~3sp
+        lineHeight = 30.sp,
+        // Proportional letterSpacing
+        letterSpacing = pxToEm(letterPx = 0.3816f, fontSizePx = 26f)
     )
 )
 
