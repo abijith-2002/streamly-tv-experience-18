@@ -6,9 +6,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -39,18 +39,24 @@ import com.android.streamly.ui.theme.StreamlyTheme
 /**
  * PUBLIC_INTERFACE
  * HomeHero
- * Pixel-accurate hero section for Android TV using a 1920x1080 baseline, aligned to the design
- * references in assets/home-page-screen_1-2.html and CSS tokens.
+ * Pixel-accurate hero section for Android TV using a 1920x1080 baseline, aligned to
+ * assets/home-page-screen_1-2.html and its CSS tokens.
  *
- * Behavior and layout:
- * - Uses 1920x1080 as baseline. All coordinates and sizes inside the hero scale by width.
- * - Hero height follows baseline 444px (scaled) per the Highlights section in the asset.
- * - Background is composed of:
- *   - A main slice positioned at left: 88px, width: 1744px, height: 444px (scaled).
- *   - A right mask slice at left: 1872px, width: 48px (scaled), fading to background.
- *   - A left soft mask at left: 0px, width: 88px (scaled), fading from background into the main slice.
- * - Overlay title/metadata/CTA are placed with pixel-exact baseline offsets (scaled).
- * - CTA is focusable, uses Streamly theme tokens for colors, focus ring thickness, and typography.
+ * Verified layout against assets:
+ * - Main slice at left=88px, width=1744px, height=444px
+ * - Right mask at left=1872px, width=48px (fades to background)
+ * - Soft left mask from background to transparent across 88px
+ * - Overlay title/metadata/CTA offsets scaled from base widths; lateral offset uses theme spacings
+ *   (2*spaceXl + spaceLg = 88px) in addition to the 88px main slice offset.
+ *
+ * Scaling:
+ * - All coordinates scale from a 1920-wide baseline to preserve layout on 1080p and 4K.
+ * - Heights and widths preserve 16:9 alignment and legibility with theme typography.
+ *
+ * Accessibility and TV focus:
+ * - Root semantics content description references the hero title for screen readers.
+ * - CTA is focusable and will be programmatically focused when the hero receives focus.
+ * - CTA exposes Role.Button and descriptive contentDescription.
  *
  * Parameters:
  * - hero: The hero item data (title used for overlay)
@@ -83,9 +89,9 @@ fun HomeHero(
     val leftMaskLeft = 0f
     val leftMaskW = mainSliceLeft
 
-    // Overlay text/CTA baseline positions (relative to hero viewport)
-    // Chosen to match typical safe-region spacing and design spacing from the assets.
-    val overlayLeft = 176f   // 88 (slice left) + 88 spacing to keep text away from edge
+    // Overlay text/CTA baseline positions (relative to hero viewport).
+    // Lateral overlay offset: main slice left + (2*spaceXl + spaceLg) = 88 + 88 = 176 (from theme tokens).
+    val overlayLeftPx = mainSliceLeft + (2f * d.spaceXl.value) + d.spaceLg.value
     val titleTop = 40f
     val metaTop = 110f
     val ctaTop = 180f
@@ -93,12 +99,25 @@ fun HomeHero(
     val ctaH = 56f
     val ctaRadius = 10f
 
+    // Make CTA the focal point when hero receives focus (TV UX expectation).
+    val ctaFR = remember { FocusRequester() }
+
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
+            // Forward focus from the hero container into the CTA for immediate action affordance
+            .onFocusChanged { state ->
+                if (state.isFocused) {
+                    ctaFR.requestFocus()
+                }
+            }
+            .semantics {
+                // Root A11y description for the hero section
+                val label = hero?.title ?: "Destacado"
+                contentDescription = "Destacado: $label"
+            }
     ) {
-        // Compute scale from available width using 1920 baseline. This preserves pixel-exact ratios
-        // for 1080p and 4K, as required.
+        // Compute scale from available width using 1920 baseline to preserve pixel accuracy.
         val scale = maxWidth.value / baseW
         fun s(px: Float): Dp = (px * scale).dp
 
@@ -112,8 +131,6 @@ fun HomeHero(
                 .height(heroHeight)
         ) {
             // LEFT MASK: Fade from background (left) into transparent (right)
-            // This emulates a soft edge before the main slice, maintaining the visual blending
-            // similar to how the CSS/right mask works on the opposite side.
             Box(
                 modifier = Modifier
                     .offset(x = s(leftMaskLeft), y = 0.dp)
@@ -129,8 +146,8 @@ fun HomeHero(
                     )
             )
 
-            // MAIN HERO SLICE: Positioned at left=88, width=1744, height=444 (all scaled).
-            // We use a rich gradient placeholder in lieu of actual images, matching the brand palette.
+            // MAIN HERO SLICE: Positioned at left=88, width=1744, height=444 (scaled).
+            // Using brand-like gradient in place of image for placeholder fidelity.
             Box(
                 modifier = Modifier
                     .offset(x = s(mainSliceLeft), y = 0.dp)
@@ -139,9 +156,9 @@ fun HomeHero(
                     .background(
                         brush = Brush.linearGradient(
                             colors = listOf(
-                                Color(0xFF477F9B), // approximate to design gradient left
-                                Color(0xFF8D4CA7), // mid
-                                Color(0xFF4271D4)  // right
+                                Color(0xFF477F9B), // approximates --color-477f9b
+                                Color(0xFF8D4CA7), // approximates --color-8d4ca7
+                                Color(0xFF4271D4)  // approximates --color-4271d4
                             )
                         )
                     )
@@ -181,7 +198,7 @@ fun HomeHero(
             BasicText(
                 text = hero?.title ?: "Destacado",
                 modifier = Modifier
-                    .offset(x = s(overlayLeft), y = s(titleTop)),
+                    .offset(x = s(overlayLeftPx), y = s(titleTop)),
                 style = t.titleXL.merge(
                     TextStyle(
                         color = c.textPrimary,
@@ -194,7 +211,7 @@ fun HomeHero(
             BasicText(
                 text = "Acción • Ciencia ficción • 2 h 13 min",
                 modifier = Modifier
-                    .offset(x = s(overlayLeft), y = s(metaTop)),
+                    .offset(x = s(overlayLeftPx), y = s(metaTop)),
                 style = t.bodyL.merge(
                     TextStyle(
                         color = c.textSecondary,
@@ -204,7 +221,6 @@ fun HomeHero(
             )
 
             // Overlay: CTA "Ver ahora" (Focusable TV button)
-            val ctaFR = remember { FocusRequester() }
             var ctaFocused by remember { mutableStateOf(false) }
 
             val ctaShape = RoundedCornerShape(s(ctaRadius))
@@ -213,13 +229,14 @@ fun HomeHero(
 
             Box(
                 modifier = Modifier
-                    .offset(x = s(overlayLeft), y = s(ctaTop))
+                    .offset(x = s(overlayLeftPx), y = s(ctaTop))
                     .size(width = s(ctaW), height = s(ctaH))
                     .background(color = ctaBg, shape = ctaShape)
                     .border(width = d.focusRingThickness, color = ctaBorderColor, shape = ctaShape)
                     .semantics {
                         role = Role.Button
-                        contentDescription = "Ver ahora"
+                        val label = hero?.title ?: "Destacado"
+                        contentDescription = "Ver ahora: $label"
                     }
                     .focusRequester(ctaFR)
                     .focusable()
@@ -231,7 +248,7 @@ fun HomeHero(
                         interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
                     )
             ) {
-                // Center the text vertically with a baseline offset (approx. 12px on baseline)
+                // Text with a baseline offset for visual centering
                 BasicText(
                     text = "Ver ahora",
                     modifier = Modifier
