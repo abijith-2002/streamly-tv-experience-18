@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +31,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -147,22 +150,35 @@ fun HomeHero(
             )
 
             // MAIN HERO SLICE: Positioned at left=88, width=1744, height=444 (scaled).
-            // Using brand-like gradient in place of image for placeholder fidelity.
             Box(
                 modifier = Modifier
                     .offset(x = s(mainSliceLeft), y = 0.dp)
                     .width(s(mainSliceW))
                     .height(s(baseHeroH))
-                    .background(
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                Color(0xFF477F9B),
-                                Color(0xFF8D4CA7),
-                                Color(0xFF4271D4)
-                            )
-                        )
-                    )
             ) {
+                if (hero?.imageResId != null) {
+                    Image(
+                        painter = painterResource(id = hero.imageResId),
+                        contentDescription = hero.title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    // Fallback gradient when no image provided
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.linearGradient(
+                                    colors = listOf(
+                                        Color(0xFF477F9B),
+                                        Color(0xFF8D4CA7),
+                                        Color(0xFF4271D4)
+                                    )
+                                )
+                            )
+                    )
+                }
                 // Bottom gradient for legibility over imagery
                 Box(
                     modifier = Modifier

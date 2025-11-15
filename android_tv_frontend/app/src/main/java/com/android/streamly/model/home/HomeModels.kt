@@ -1,5 +1,7 @@
 package com.android.streamly.model.home
 
+import androidx.annotation.DrawableRes
+
 /**
  * Data models for the Home screen scaffolding. These map one-to-one with the composable placeholders.
  */
@@ -29,6 +31,7 @@ data class Progress(
 data class CardItem(
     val id: String,
     val title: String,
+    @DrawableRes val imageResId: Int? = null,
     val imageUrl: String? = null,
     val progress: Progress? = null
 )
@@ -39,6 +42,7 @@ data class CardItem(
 data class HeroItem(
     val id: String,
     val title: String,
+    @DrawableRes val imageResId: Int? = null,
     val imageUrl: String? = null
 )
 

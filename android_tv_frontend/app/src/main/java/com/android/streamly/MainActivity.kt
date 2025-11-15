@@ -45,24 +45,24 @@ class MainActivity : FragmentActivity() {
                 NavItem(id = "mis", title = "Mis Contenidos")
             )
 
-            val hero = HeroItem(id = "h1", title = "Destacado")
+            val hero = HeroItem(id = "h1", title = "Destacado", imageResId = R.drawable.hero_main)
 
             val rails = listOf(
                 RailSection(
                     id = "r1",
                     title = "Seguí viendo",
                     items = listOf(
-                        CardItem(id = "c1", title = "Rogue One", progress = Progress(current = 176, total = 436)),
-                        CardItem(id = "c2", title = "Ex Machina", progress = Progress(current = 153, total = 379)),
-                        CardItem(id = "c3", title = "Sing Street", progress = Progress(current = 153, total = 379))
+                        CardItem(id = "c1", title = "Rogue One", imageResId = R.drawable.poster_rogue_one, progress = Progress(current = 176, total = 436)),
+                        CardItem(id = "c2", title = "Ex Machina", imageResId = R.drawable.poster_ex_machina, progress = Progress(current = 153, total = 379)),
+                        CardItem(id = "c3", title = "Sing Street", imageResId = R.drawable.poster_sing_street, progress = Progress(current = 153, total = 379))
                     )
                 ),
                 RailSection(
                     id = "r2",
                     title = "Populares",
                     items = listOf(
-                        CardItem(id = "c4", title = "2012"),
-                        CardItem(id = "c5", title = "Ad Astra")
+                        CardItem(id = "c4", title = "2012", imageResId = R.drawable.poster_2012),
+                        CardItem(id = "c5", title = "Ad Astra", imageResId = R.drawable.poster_ad_astra)
                     )
                 ),
                 // New sample section to exercise the TV Channels variant
@@ -71,9 +71,9 @@ class MainActivity : FragmentActivity() {
                     title = "Canales de TV",
                     items = listOf(
                         // Progress ratio ~80/207 to match assets small progress
-                        CardItem(id = "tv1", title = "Marca Claro Radio", progress = Progress(current = 80, total = 207)),
-                        CardItem(id = "tv2", title = "E.T.", progress = Progress(current = 80, total = 207)),
-                        CardItem(id = "tv3", title = "Marca Claro Radio", progress = Progress(current = 80, total = 207))
+                        CardItem(id = "tv1", title = "Marca Claro Radio", imageResId = R.drawable.poster_tv1, progress = Progress(current = 80, total = 207)),
+                        CardItem(id = "tv2", title = "E.T.", imageResId = R.drawable.poster_tv2a, progress = Progress(current = 80, total = 207)),
+                        CardItem(id = "tv3", title = "Marca Claro Radio", imageResId = R.drawable.poster_tv3, progress = Progress(current = 80, total = 207))
                     )
                 )
             )

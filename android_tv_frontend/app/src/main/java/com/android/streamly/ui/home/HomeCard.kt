@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,6 +27,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -150,22 +154,34 @@ private fun DefaultPosterCard(
                 onClick = { /* no-op for now */ }
             )
     ) {
-        // Poster area (placeholder gradient)
-        Box(
-            modifier = Modifier
-                .width(width)
-                .height(s(posterH))
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            Color(0xFF477F9B),
-                            Color(0xFF8D4CA7),
-                            Color(0xFF4271D4)
-                        )
-                    ),
-                    shape = cardShape
-                )
-        )
+        // Poster area image or placeholder gradient
+        if (card.imageResId != null) {
+            androidx.compose.foundation.Image(
+                painter = painterResource(id = card.imageResId),
+                contentDescription = card.title,
+                modifier = Modifier
+                    .width(width)
+                    .height(s(posterH))
+                    .clip(cardShape),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .width(width)
+                    .height(s(posterH))
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                Color(0xFF477F9B),
+                                Color(0xFF8D4CA7),
+                                Color(0xFF4271D4)
+                            )
+                        ),
+                        shape = cardShape
+                    )
+            )
+        }
 
         // Progress bar inside poster
         Box(
@@ -294,21 +310,32 @@ private fun TvChannelCard(
                 onClick = { /* no-op */ }
             )
     ) {
-        // Left Poster (placeholder gradient)
-        Box(
-            modifier = Modifier
-                .size(width = s(posterW), height = s(posterH))
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            Color(0xFF477F9B),
-                            Color(0xFF8D4CA7),
-                            Color(0xFF4271D4)
-                        )
-                    ),
-                    shape = cardShape
-                )
-        )
+        // Left Poster image or placeholder gradient
+        if (card.imageResId != null) {
+            androidx.compose.foundation.Image(
+                painter = painterResource(id = card.imageResId),
+                contentDescription = card.title,
+                modifier = Modifier
+                    .size(width = s(posterW), height = s(posterH))
+                    .clip(cardShape),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .size(width = s(posterW), height = s(posterH))
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                Color(0xFF477F9B),
+                                Color(0xFF8D4CA7),
+                                Color(0xFF4271D4)
+                            )
+                        ),
+                        shape = cardShape
+                    )
+            )
+        }
 
         // Info column texts
         // Title
