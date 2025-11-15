@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.times
 import com.android.streamly.model.home.HeroItem
 import com.android.streamly.ui.theme.StreamlyTheme
 
@@ -30,7 +31,7 @@ fun HomeHero(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = d.spaceXl * 10) // approx min height
+            .heightIn(min = d.spaceXl * 10f) // approx min height using spacing token
             .aspectRatio(1744f / 444f) // matches figma slice proportion
             .background(color = c.surface2)
             .padding(d.spaceMd)

@@ -5,10 +5,10 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 /**
- * TvColors maps design tokens from assets/common.css and home-page-screen_1-2.css
+ * TvColors maps design tokens from assets/common.css and assets/home-page-screen_1-2.css
  * into Compose Color values.
  *
- * CSS token mapping reference:
+ * CSS token mapping reference (common.css -> Compose):
  * - --color-121212 -> background (tv-bg)
  * - --color-ffffff -> textPrimary
  * - --color-7f8282 -> textSecondary (muted)
@@ -19,6 +19,20 @@ import androidx.compose.ui.graphics.Color
  * - --color-e1251b -> accent (primary accent)
  * - --color-eb0045 -> live (badge)
  * - --color-c60000 -> danger
+ *
+ * Screen tokens mapping (home-page-screen_1-2.css -> Compose):
+ * - --tv-bg        -> background
+ * - --tv-text      -> textPrimary
+ * - --tv-muted     -> textSecondary
+ * - --tv-surface   -> surface
+ * - --tv-surface-2 -> surface2
+ * - --tv-track     -> track
+ * - --tv-progress  -> progress
+ * - --tv-accent    -> accent
+ * - --tv-live      -> live
+ * - --tv-danger    -> danger
+ *
+ * "On" colors are set for legibility on dark surfaces.
  */
 @Immutable
 data class TvColors(
