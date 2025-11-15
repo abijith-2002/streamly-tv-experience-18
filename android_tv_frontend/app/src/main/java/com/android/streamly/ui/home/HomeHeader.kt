@@ -14,7 +14,6 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -50,11 +49,10 @@ import com.android.streamly.ui.theme.StreamlyTheme
  * PUBLIC_INTERFACE
  * HomeHeader
  * Resized and centered header for Android TV:
- * - Smaller nav bar height (≈60dp), smaller background capsule and icons
- * - Tabs are centered horizontally, with relative spacing; no hard absolute X positions
- * - Active/focus capsules sized to text width + padding to avoid clipping
- * - "Claro video" label rendered smaller to prevent crowding
- * - Search/Avatar aligned to start/end and sized to match reduced header height
+ * - Top nav container is fixed to 579.5dp x 32dp, horizontally centered
+ * - Internal elements scaled to fit the 32dp height (capsule ~28dp with 14dp radius)
+ * - Tabs spaced relatively within the fixed width (no hard absolute offsets)
+ * - "Claro video" is rendered as a tab (must be present in items list)
  *
  * Accessibility:
  * - Decorative shapes are removed from the a11y tree
@@ -79,14 +77,15 @@ fun HomeHeader(
     val d = StreamlyTheme.dimens
     val density = LocalDensity.current
 
-    // Header sizing (reduced)
+    // Header sizing
     val headerH = 60.dp
 
-    // TopNav capsule sizing (reduced)
-    val topNavBgH = 50.dp
-    val topNavBgRadius = 28.dp
+    // Fixed nav container size as requested
+    val navWidth = 579.5.dp
+    val topNavBgH = 32.dp
+    val topNavBgRadius = 16.dp
 
-    // Search and Avatar sizing (scaled down)
+    // Search and Avatar sizing (unchanged)
     val searchTouch = 32.dp
     val sidePad = 24.dp
 
@@ -114,72 +113,43 @@ fun HomeHeader(
                 traversalIndex = 0f
             }
     ) {
-        // Left-aligned logo/text "Claro video" with smaller font to reduce crowding
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .padding(start = 0.dp)
-                .height(headerH)
-                .clearAndSetSemantics { /* decorative */ }
-        ) {
-            BasicText(
-                text = "Claro video",
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .offset(x = 0.dp), // keep at start inside safe margin from scaffold
-                style = t.labelL.merge(
-                    TextStyle(
-                        // Reduce size specifically for this label as requested
-                        fontSize = 24.sp,
-                        color = c.textPrimary,
-                        textAlign = TextAlign.Start
-                    )
-                )
-            )
-        }
-
-        // Centered TopNav background capsule limited to a max width
-        val maxNavWidth = 1100.dp
+        // Centered TopNav background capsule with exact width/height
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentWidth(Alignment.CenterHorizontally)
-                .widthIn(max = maxNavWidth)
-                .height(headerH)
+                .width(navWidth)
+                .height(topNavBgH)
+                .align(Alignment.Center)
         ) {
+            // Background capsule
             Box(
                 modifier = Modifier
-                    .align(Alignment.Center)
-                    .fillMaxWidth()
-                    .padding(horizontal = 0.dp)
-                    .height(topNavBgH)
+                    .matchParentSize()
                     .background(color = c.surface2, shape = RoundedCornerShape(topNavBgRadius))
                     .clearAndSetSemantics { /* decorative */ }
             )
 
-            // Tabs row centered within the capsule, with spacing that adapts to fit longest label
-            val labelHPad = 10.dp
-            val capsuleHPad = 20.dp
-            val rowHPad = 32.dp
-            val itemSpacing = 28.dp
-
+            // Tabs row centered within the capsule, with relative spacing to fit fixed width
+            val labelHPad = 8.dp
+            val capsuleHPad = 16.dp
             Row(
-                horizontalArrangement = Arrangement.spacedBy(itemSpacing, Alignment.CenterHorizontally),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .align(Alignment.Center)
-                    .fillMaxWidth()
-                    .padding(horizontal = rowHPad)
-                    .height(topNavBgH)
+                    .fillMaxSize()
+                    .padding(horizontal = 12.dp) // small inner padding so capsules don't touch edges
             ) {
                 items.forEachIndexed { index, item ->
                     val isActive = (index == activeIndex) || item.active
                     var hasFocus by remember { mutableStateOf(false) }
                     var textWidthPx by remember { mutableStateOf(0) }
                     val textWidthDp: Dp = with(density) { textWidthPx.toDp() }
-                    val capsuleW = (textWidthDp + capsuleHPad).coerceAtLeast(56.dp)
-                    val capsuleH = 48.dp
-                    val capsuleRadius = 28.dp
+
+                    // Capsule geometry relative to 32dp height
+                    val capsuleH = 28.dp
+                    val capsuleRadius = 14.dp
+                    val capsuleW = (textWidthDp + capsuleHPad).coerceAtLeast(44.dp)
 
                     val ringColor = c.accent
                     val textColor = when {
@@ -195,10 +165,9 @@ fun HomeHeader(
                         else -> null
                     }
 
-                    // Each tab is a box that draws its own background capsule sized to text width
+                    // Each tab container uses intrinsic width but spacing is managed by SpaceBetween
                     Box(
                         modifier = Modifier
-                            .padding(vertical = (topNavBgH - capsuleH) / 2f)
                             .height(capsuleH)
                             .wrapContentWidth()
                     ) {
@@ -218,7 +187,7 @@ fun HomeHeader(
                                 )
                                 .clearAndSetSemantics { /* decorative */ }
                         )
-                        // Active backdrop (under text) - lighter accent
+                        // Active backdrop (under text)
                         if (isActive) {
                             Box(
                                 modifier = Modifier
@@ -232,7 +201,7 @@ fun HomeHeader(
                             )
                         }
 
-                        // Tab text
+                        // Tab text with small size override to fit height (approx 16sp)
                         BasicText(
                             text = item.title,
                             modifier = Modifier
@@ -271,6 +240,9 @@ fun HomeHeader(
                             },
                             style = (if (isActive) t.navActive else t.nav).merge(
                                 TextStyle(
+                                    // Override font size minimally to ensure fit within 32dp height
+                                    fontSize = 16.sp,
+                                    lineHeight = 20.sp,
                                     color = textColor,
                                     textAlign = TextAlign.Start
                                 )

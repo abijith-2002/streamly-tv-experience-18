@@ -38,8 +38,9 @@ class MainActivity : FragmentActivity() {
             ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed
         )
         composeView.setContent {
-            // Top navigation model
+            // Top navigation model (ensure "Claro video" is present and rendered)
             val nav = listOf(
+                NavItem(id = "clarovideo", title = "Claro video"),
                 NavItem(id = "inicio", title = "Inicio", active = true),
                 NavItem(id = "peliculas", title = "Películas"),
                 NavItem(id = "series", title = "Series"),
