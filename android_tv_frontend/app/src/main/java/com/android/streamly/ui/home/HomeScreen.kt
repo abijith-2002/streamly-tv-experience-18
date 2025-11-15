@@ -12,8 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
-import com.android.streamly.R
-import com.android.streamly.model.home.CardItem
 import com.android.streamly.model.home.HeroItem
 import com.android.streamly.model.home.NavItem
 import com.android.streamly.model.home.RailSection
@@ -55,7 +53,6 @@ fun HomeScreen(
     // Focus requesters for traversal boundaries
     val headerFirstTabFR = remember { FocusRequester() }
     val heroFR = remember { FocusRequester() }
-    val bannerFR = remember { FocusRequester() }
     val railEntryFRs = remember(rails.size) { List(rails.size) { FocusRequester() } }
 
     StreamlyTheme {
@@ -67,8 +64,8 @@ fun HomeScreen(
                 HomeHeader(
                     items = nav,
                     activeIndex = activeIndex,
-                    // Provide a FocusRequester for down traversal (header -> banner)
-                    downDestination = bannerFR,
+                    // Provide a FocusRequester for down traversal (header -> hero)
+                    downDestination = heroFR,
                     // Expose first tab FocusRequester to be targeted by hero/rails
                     firstTabExternalFR = headerFirstTabFR,
                     // Auto focus to first tab when screen loads
@@ -84,34 +81,17 @@ fun HomeScreen(
                         .fillMaxSize()
                         .padding(bottom = spacing.spaceMd) // keep some breathing room at bottom
                 ) {
-                    // Inline demo data for banners using existing poster resources
-                    val banners = listOf(
-                        CardItem(id = "b1", title = "Rogue One", imageResId = R.drawable.poster_rogue_one),
-                        CardItem(id = "b2", title = "Ex Machina", imageResId = R.drawable.poster_ex_machina),
-                        CardItem(id = "b3", title = "2012", imageResId = R.drawable.poster_2012),
-                        CardItem(id = "b4", title = "Ad Astra", imageResId = R.drawable.poster_ad_astra),
-                        CardItem(id = "b5", title = "Sing Street", imageResId = R.drawable.poster_sing_street)
-                    )
-
-                    // Banner carousel between header and hero.
-                    BannerCarousel(
-                        items = banners,
-                        entryFocusRequester = bannerFR,
-                        upDestination = headerFirstTabFR,
-                        downDestination = heroFR
-                    )
-
                     // Hero with explicit up/down destinations
                     HomeHero(
                         hero = hero,
                         modifier = Modifier
                             .focusRequester(heroFR)
                             .focusProperties {
-                                // Up returns to banner, down goes to the first rail entry
-                                up = bannerFR
+                                // Up returns to header first tab, down goes to the first rail entry
+                                up = headerFirstTabFR
                                 down = railEntryFRs.firstOrNull() ?: FocusRequester.Default
                             },
-                        upDestination = bannerFR,
+                        upDestination = headerFirstTabFR,
                         downDestination = railEntryFRs.firstOrNull(),
                         onCtaClick = { /* TODO: navigate to playback/info */ }
                     )
