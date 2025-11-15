@@ -9,6 +9,7 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import com.android.streamly.model.home.CardItem
 import com.android.streamly.model.home.HeroItem
 import com.android.streamly.model.home.NavItem
+import com.android.streamly.model.home.Progress
 import com.android.streamly.model.home.RailSection
 import com.android.streamly.ui.home.HomeScreen
 
@@ -51,9 +52,9 @@ class MainActivity : FragmentActivity() {
                     id = "r1",
                     title = "Seguí viendo",
                     items = listOf(
-                        CardItem(id = "c1", title = "Rogue One"),
-                        CardItem(id = "c2", title = "Ex Machina"),
-                        CardItem(id = "c3", title = "Sing Street")
+                        CardItem(id = "c1", title = "Rogue One", progress = Progress(current = 176, total = 436)),
+                        CardItem(id = "c2", title = "Ex Machina", progress = Progress(current = 153, total = 379)),
+                        CardItem(id = "c3", title = "Sing Street", progress = Progress(current = 153, total = 379))
                     )
                 ),
                 RailSection(
