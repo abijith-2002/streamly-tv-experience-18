@@ -6,33 +6,7 @@
     android:layout_height="match_parent"
     android:background="@color/tv_background">
 
-    <TextView
-        android:id="@+id/title_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/app_name"
-        android:textSize="48sp"
-        android:textColor="@color/tv_primary"
-        android:focusable="false"
-        android:focusableInTouchMode="false"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/subtitle_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Ready for rating screen integration"
-        android:textSize="24sp"
-        android:textColor="@color/tv_secondary"
-        android:layout_marginTop="24dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/title_text" />
-
-    <!-- Fullscreen Compose host for the Home scaffolding -->
+    <!-- Fullscreen Compose host for the Home scaffolding (only view to minimize overdraw) -->
     <androidx.compose.ui.platform.ComposeView
         android:id="@+id/home_compose"
         android:layout_width="0dp"

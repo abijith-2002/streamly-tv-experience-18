@@ -205,6 +205,7 @@ fun HomeHero(
                             .crossfade(false)
                             .memoryCachePolicy(CachePolicy.ENABLED)
                             .diskCachePolicy(CachePolicy.ENABLED)
+                            .allowHardware(true)
                             .size(coil.size.Size(reqWidthPx, reqHeightPx))
                             .build(),
                         contentDescription = hero?.title ?: "Destacado", // Meaningful image; provide label for TalkBack

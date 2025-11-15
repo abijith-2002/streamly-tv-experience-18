@@ -8,6 +8,7 @@ import androidx.fragment.app.FragmentActivity
 import coil.Coil
 import coil.request.CachePolicy
 import coil.request.ImageRequest
+import coil.size.Size
 
 /**
  * PUBLIC_INTERFACE
@@ -47,13 +48,25 @@ class SplashActivity : FragmentActivity() {
         // Using resource hero_main; Coil will at least warm memory cache for instant draw.
         try {
             val loader = Coil.imageLoader(this)
+
+            // Compute hero slice target size based on current device width and overscan-safe margins.
+            // Baseline: 1920px screen width -> hero main slice 1744x444.
+            val dm = resources.displayMetrics
+            val density = dm.density
+            val safeMarginPerSidePx = 48f * density
+            val contentWidthPx = (dm.widthPixels - safeMarginPerSidePx * 2f).coerceAtLeast(1f)
+            val baseWidth = 1920f
+            val scale = contentWidthPx / baseWidth
+            val reqW = (1744f * scale).toInt().coerceAtLeast(1)
+            val reqH = (444f * scale).toInt().coerceAtLeast(1)
+
             val request = ImageRequest.Builder(this)
                 .data(R.drawable.hero_main)
                 .crossfade(false)
                 .allowHardware(true)
                 .memoryCachePolicy(CachePolicy.ENABLED)
                 .diskCachePolicy(CachePolicy.ENABLED)
-                // ORIGINAL size is fine for resource prefetch; decode cost is minimal for local resource
+                .size(Size(reqW, reqH))
                 .build()
             loader.enqueue(request)
         } catch (_: Throwable) {

@@ -180,6 +180,7 @@ private fun DefaultPosterCard(
                     .crossfade(false)
                     .memoryCachePolicy(CachePolicy.ENABLED)
                     .diskCachePolicy(CachePolicy.ENABLED)
+                    .allowHardware(true)
                     .size(coil.size.Size(widthPx, heightPx))
                     .build(),
                 contentDescription = card.title, // Meaningful image; label for TalkBack
@@ -361,6 +362,7 @@ private fun TvChannelCard(
                     .crossfade(false)
                     .memoryCachePolicy(CachePolicy.ENABLED)
                     .diskCachePolicy(CachePolicy.ENABLED)
+                    .allowHardware(true)
                     .size(coil.size.Size(posterWidthPx, posterHeightPx))
                     .build(),
                 contentDescription = card.title, // Meaningful image; provide label

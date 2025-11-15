@@ -3,7 +3,6 @@ package com.android.streamly
 import android.os.Bundle
 import androidx.fragment.app.FragmentActivity
 import android.view.KeyEvent
-import android.widget.TextView
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import com.android.streamly.model.home.CardItem
@@ -19,15 +18,9 @@ import com.android.streamly.ui.home.HomeScreen
  */
 class MainActivity : FragmentActivity() {
 
-    private lateinit var titleText: TextView
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        titleText = findViewById(R.id.title_text)
-        // Use the app_name string resource to present the title
-        titleText.text = getString(R.string.app_name)
 
         // Compose integration via ComposeView to render Home scaffolding
         val composeView: ComposeView = findViewById(R.id.home_compose)
