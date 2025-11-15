@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
-import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,19 +25,26 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.drawWithContent
+
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size as UiSize
+import coil.compose.AsyncImage
+import coil.request.CachePolicy
+import coil.request.ImageRequest
 import com.android.streamly.model.home.HeroItem
 import com.android.streamly.ui.theme.StreamlyTheme
 
@@ -102,6 +107,8 @@ fun HomeHero(
 
     // Make CTA the focal point when hero receives focus (TV UX expectation).
     val ctaFR = remember { FocusRequester() }
+    val context = LocalContext.current
+    val density = LocalDensity.current
 
     BoxWithConstraints(
         modifier = modifier
@@ -133,29 +140,54 @@ fun HomeHero(
         // Scaled hero height
         val heroHeight = s(baseHeroH)
 
-        // Root hero viewport
+        // Precompute px values for overlays to minimize allocations inside draw phase
+        val leftMaskWpx = with(density) { s(leftMaskW).toPx() }
+        val rightMaskLeftPx = with(density) { s(rightMaskLeft).toPx() }
+        val rightMaskWpx = with(density) { s(rightMaskW).toPx() }
+        val mainSliceLeftPx = with(density) { s(mainSliceLeft).toPx() }
+        val mainSliceWPx = with(density) { s(mainSliceW).toPx() }
+        val heroHeightPx = with(density) { heroHeight.toPx() }
+
+        // Root hero viewport, with overlays drawn in a single pass to reduce overdraw
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(heroHeight)
-        ) {
-            // LEFT MASK: Fade from background (left) into transparent (right)
-            Box(
-                modifier = Modifier
-                    .offset(x = s(leftMaskLeft), y = 0.dp)
-                    .width(s(leftMaskW))
-                    .height(s(baseHeroH))
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                c.background,      // full background at extreme left
-                                Color.Transparent  // blend into the main slice area
-                            )
-                        )
-                    )
-                    .clearAndSetSemantics { /* decorative */ }
-            )
+                .drawWithContent {
+                    // Draw child content (image slice + overlay texts/CTA boxes)
+                    drawContent()
 
+                    // Bottom gradient overlay for legibility - restricted to the main slice area
+                    drawRect(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                c.background.copy(alpha = 0.32f)
+                            )
+                        ),
+                        topLeft = Offset(x = mainSliceLeftPx, y = 0f),
+                        size = UiSize(width = mainSliceWPx, height = heroHeightPx)
+                    )
+
+                    // LEFT MASK gradient: fade from background (left) into transparent
+                    drawRect(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(c.background, Color.Transparent)
+                        ),
+                        topLeft = Offset(x = 0f, y = 0f),
+                        size = UiSize(width = leftMaskWpx, height = heroHeightPx)
+                    )
+
+                    // RIGHT MASK gradient: fade from transparent into background
+                    drawRect(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(Color.Transparent, c.background)
+                        ),
+                        topLeft = Offset(x = rightMaskLeftPx, y = 0f),
+                        size = UiSize(width = rightMaskWpx, height = heroHeightPx)
+                    )
+                }
+        ) {
             // MAIN HERO SLICE: Positioned at left=88, width=1744, height=444 (scaled).
             Box(
                 modifier = Modifier
@@ -163,18 +195,30 @@ fun HomeHero(
                     .width(s(mainSliceW))
                     .height(s(baseHeroH))
             ) {
-                if (hero?.imageResId != null) {
-                    Image(
-                        painter = painterResource(id = hero.imageResId),
-                        contentDescription = hero.title, // Meaningful image; provide label for TalkBack
-                        modifier = Modifier.fillMaxSize(),
+                val modelData = hero?.imageUrl ?: hero?.imageResId
+                if (modelData != null) {
+                    val reqWidthPx = with(density) { s(mainSliceW).toPx() }.toInt()
+                    val reqHeightPx = with(density) { s(baseHeroH).toPx() }.toInt()
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(modelData)
+                            .crossfade(false)
+                            .memoryCachePolicy(CachePolicy.ENABLED)
+                            .diskCachePolicy(CachePolicy.ENABLED)
+                            .size(coil.size.Size(reqWidthPx, reqHeightPx))
+                            .build(),
+                        contentDescription = hero?.title ?: "Destacado", // Meaningful image; provide label for TalkBack
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(s(baseHeroH)),
                         contentScale = ContentScale.Crop
                     )
                 } else {
                     // Fallback gradient when no image provided (decorative background)
                     Box(
                         modifier = Modifier
-                            .fillMaxSize()
+                            .fillMaxWidth()
+                            .height(s(baseHeroH))
                             .background(
                                 brush = Brush.linearGradient(
                                     colors = listOf(
@@ -184,41 +228,9 @@ fun HomeHero(
                                     )
                                 )
                             )
-                            .clearAndSetSemantics { /* decorative */ }
                     )
                 }
-                // Bottom gradient for legibility over imagery (decorative)
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.Transparent,
-                                    c.background.copy(alpha = 0.32f)
-                                )
-                            )
-                        )
-                        .clearAndSetSemantics { /* decorative */ }
-                )
             }
-
-            // RIGHT MASK: Emulate 48px masked slice at left=1872; fade to background
-            Box(
-                modifier = Modifier
-                    .offset(x = s(rightMaskLeft), y = 0.dp)
-                    .width(s(rightMaskW))
-                    .height(s(baseHeroH))
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                Color.Transparent, // transparent at boundary with main slice
-                                c.background       // full background towards the far right
-                            )
-                        )
-                    )
-                    .clearAndSetSemantics { /* decorative */ }
-            )
 
             // Overlay: Title (typo-25 mapping -> titleXL)
             BasicText(

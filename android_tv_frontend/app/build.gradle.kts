@@ -81,6 +81,9 @@ dependencies {
 
     // Image loading
     implementation("com.github.bumptech.glide:glide:4.16.0")
+    // Coil for images (core + Compose integration) with explicit versions
+    implementation("io.coil-kt:coil:2.6.0")
+    implementation("io.coil-kt:coil-compose:2.6.0")
 
     // Jetpack Compose (explicit versions compatible with Kotlin 1.9.22 / Compiler 1.5.10)
     implementation("androidx.compose.runtime:runtime:1.6.7")

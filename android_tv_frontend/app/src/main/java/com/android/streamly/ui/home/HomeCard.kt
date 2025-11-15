@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
-import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,15 +26,18 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.role
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.clip
-
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import coil.request.CachePolicy
+import coil.request.ImageRequest
 import com.android.streamly.model.home.CardItem
 import com.android.streamly.ui.theme.StreamlyTheme
 
@@ -145,6 +147,12 @@ private fun DefaultPosterCard(
     val focusRingColor = c.accent
     val cardBorderColor = if (focused) focusRingColor else Color.Transparent
 
+    val context = LocalContext.current
+    val density = LocalDensity.current
+    val posterHeightDp = s(posterH)
+    val widthPx = with(density) { width.toPx() }.toInt()
+    val heightPx = with(density) { posterHeightDp.toPx() }.toInt()
+
     Box(
         modifier = modifier
             .size(width = width, height = height)
@@ -164,13 +172,20 @@ private fun DefaultPosterCard(
             )
     ) {
         // Poster area image or placeholder gradient
-        if (card.imageResId != null) {
-            androidx.compose.foundation.Image(
-                painter = painterResource(id = card.imageResId),
+        val modelData = card.imageUrl ?: card.imageResId
+        if (modelData != null) {
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(modelData)
+                    .crossfade(false)
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .size(coil.size.Size(widthPx, heightPx))
+                    .build(),
                 contentDescription = card.title, // Meaningful image; label for TalkBack
                 modifier = Modifier
                     .width(width)
-                    .height(s(posterH))
+                    .height(posterHeightDp)
                     .clip(cardShape),
                 contentScale = ContentScale.Crop
             )
@@ -178,7 +193,7 @@ private fun DefaultPosterCard(
             Box(
                 modifier = Modifier
                     .width(width)
-                    .height(s(posterH))
+                    .height(posterHeightDp)
                     .background(
                         brush = Brush.linearGradient(
                             colors = listOf(
@@ -313,6 +328,13 @@ private fun TvChannelCard(
     // Root label - include "en vivo" when badge is shown
     val rootLabel = if (showLiveBadge) "${card.title}, en vivo" else card.title
 
+    val context = LocalContext.current
+    val density = LocalDensity.current
+    val posterWidthDp = s(posterW)
+    val posterHeightDp = s(posterH)
+    val posterWidthPx = with(density) { posterWidthDp.toPx() }.toInt()
+    val posterHeightPx = with(density) { posterHeightDp.toPx() }.toInt()
+
     Box(
         modifier = modifier
             .size(width = width, height = height)
@@ -331,19 +353,26 @@ private fun TvChannelCard(
             )
     ) {
         // Left Poster image or placeholder gradient
-        if (card.imageResId != null) {
-            androidx.compose.foundation.Image(
-                painter = painterResource(id = card.imageResId),
+        val modelData = card.imageUrl ?: card.imageResId
+        if (modelData != null) {
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(modelData)
+                    .crossfade(false)
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .size(coil.size.Size(posterWidthPx, posterHeightPx))
+                    .build(),
                 contentDescription = card.title, // Meaningful image; provide label
                 modifier = Modifier
-                    .size(width = s(posterW), height = s(posterH))
+                    .size(width = posterWidthDp, height = posterHeightDp)
                     .clip(cardShape),
                 contentScale = ContentScale.Crop
             )
         } else {
             Box(
                 modifier = Modifier
-                    .size(width = s(posterW), height = s(posterH))
+                    .size(width = posterWidthDp, height = posterHeightDp)
                     .background(
                         brush = Brush.linearGradient(
                             colors = listOf(
