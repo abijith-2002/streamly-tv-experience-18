@@ -51,7 +51,7 @@ import com.android.streamly.ui.theme.StreamlyTheme
  * Resized and centered header for Android TV:
  * - Top nav container is fixed to 579.5dp x 32dp, horizontally centered (no clipping)
  * - Internal elements scaled to fit the 32dp height (capsule ~28dp with 14dp radius)
- * - Tabs spaced relatively within the fixed width (no hard absolute offsets)
+ * - Tabs spaced within the fixed width with small paddings so all labels (including "TV en vivo") fit
  * - "Claro video" is NOT part of the tabs; it is rendered as a separate label positioned at
  *   x=44.36.dp and y=25.9063.dp relative to the header container.
  *
@@ -86,7 +86,7 @@ fun HomeHeader(
     val topNavBgH = 32.dp
     val topNavBgRadius = 16.dp
 
-    // Search and Avatar sizing (unchanged)
+    // Search and Avatar sizing
     val searchTouch = 32.dp
     val sidePad = 24.dp
 
@@ -115,7 +115,7 @@ fun HomeHeader(
             }
     ) {
         // Brand label "Claro video" positioned absolutely within the header container
-        // at the precise offsets requested. This is not focusable and has a simple label semantics.
+        // This is not focusable and has a simple label semantics.
         BasicText(
             text = "Claro video",
             modifier = Modifier
@@ -127,7 +127,9 @@ fun HomeHeader(
             style = t.titleL.merge(
                 TextStyle(
                     color = c.textPrimary,
-                    textAlign = TextAlign.Start
+                    textAlign = TextAlign.Start,
+                    // Requirement: set this separate label to 15.sp
+                    fontSize = 15.sp
                 )
             )
         )
@@ -149,16 +151,79 @@ fun HomeHeader(
                     .clearAndSetSemantics { /* decorative */ }
             )
 
-            // Tabs row centered within the capsule, with relative spacing to fit fixed width
-            val labelHPad = 8.dp
-            val capsuleHPad = 16.dp
+            // Tabs row centered within the capsule, with tight spacing to fit within 579.5dp
+            val labelHPad = 6.dp
+            val capsuleHPad = 12.dp
+
             Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 12.dp) // small inner padding so capsules don't touch edges
+                    .padding(horizontal = 8.dp) // inner padding so content doesn't touch edges
             ) {
+                // Search button INSIDE the capsule as the first item
+                var searchFocused by remember { mutableStateOf(false) }
+                val ringColor = c.accent
+                Box(
+                    modifier = Modifier
+                        .size(searchTouch)
+                        .clip(CircleShape)
+                        .semantics {
+                            role = Role.Button
+                            contentDescription = "Buscar"
+                            traversalIndex = 0f
+                        }
+                        .focusRequester(searchFR)
+                        .focusable()
+                        .focusProperties {
+                            right = firstTabFR
+                            left = avatarFR
+                            down = downDestination ?: FocusRequester.Default
+                        }
+                        .onFocusChanged { searchFocused = it.isFocused }
+                        .border(
+                            width = if (searchFocused) d.focusRingThickness else 0.dp,
+                            color = if (searchFocused) ringColor else Color.Transparent,
+                            shape = CircleShape
+                        )
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { onSearchClick() }
+                        .background(color = Color.Transparent)
+                ) {
+                    // Simple magnifying glass icon (drawn)
+                    Canvas(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .align(Alignment.Center)
+                            .clearAndSetSemantics { /* decorative */ }
+                    ) {
+                        drawCircle(
+                            color = c.textPrimary,
+                            radius = size.minDimension * 0.35f,
+                            style = Stroke(width = 2.dp.toPx())
+                        )
+                        drawLine(
+                            color = c.textPrimary,
+                            start = androidx.compose.ui.geometry.Offset(
+                                x = size.width * 0.65f,
+                                y = size.height * 0.65f
+                            ),
+                            end = androidx.compose.ui.geometry.Offset(
+                                x = size.width * 0.9f,
+                                y = size.height * 0.9f
+                            ),
+                            strokeWidth = 2.dp.toPx(),
+                            cap = StrokeCap.Round
+                        )
+                    }
+                }
+
+                Spacer(Modifier.width(8.dp))
+
+                // Tabs
                 items.forEachIndexed { index, item ->
                     val isActive = (index == activeIndex) || item.active
                     var hasFocus by remember { mutableStateOf(false) }
@@ -170,7 +235,7 @@ fun HomeHeader(
                     val capsuleRadius = 14.dp
                     val capsuleW = (textWidthDp + capsuleHPad).coerceAtLeast(44.dp)
 
-                    val ringColor = c.accent
+                    val tabRingColor = c.accent
                     val textColor = when {
                         hasFocus -> c.onSurface
                         isActive -> c.onSurface
@@ -184,7 +249,7 @@ fun HomeHeader(
                         else -> null
                     }
 
-                    // Each tab container uses intrinsic width but spacing is managed by SpaceBetween
+                    // Each tab container uses intrinsic width; overall row uses tight spacing
                     Box(
                         modifier = Modifier
                             .height(capsuleH)
@@ -201,7 +266,7 @@ fun HomeHeader(
                                 )
                                 .border(
                                     width = if (hasFocus) d.focusRingThickness else 0.dp,
-                                    color = if (hasFocus) ringColor else Color.Transparent,
+                                    color = if (hasFocus) tabRingColor else Color.Transparent,
                                     shape = RoundedCornerShape(capsuleRadius)
                                 )
                                 .clearAndSetSemantics { /* decorative */ }
@@ -220,7 +285,7 @@ fun HomeHeader(
                             )
                         }
 
-                        // Tab text with small size override to fit height (approx 16sp)
+                        // Tab text with small size override to ensure fit within 32dp height
                         BasicText(
                             text = item.title,
                             modifier = Modifier
@@ -231,6 +296,7 @@ fun HomeHeader(
                                     selected = isActive
                                     contentDescription = item.title
                                     stateDescription = if (isActive) "seleccionada" else "no seleccionada"
+                                    // Tabs follow search (0f), so start at 1f
                                     traversalIndex = 1f + index.toFloat()
                                 }
                                 .then(if (frForTab != null) Modifier.focusRequester(frForTab) else Modifier)
@@ -268,68 +334,11 @@ fun HomeHeader(
                             )
                         )
                     }
-                }
-            }
-        }
 
-        // Search button aligned to start, vertically centered
-        var searchFocused by remember { mutableStateOf(false) }
-        val ringColor = c.accent
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .padding(start = sidePad)
-                .size(searchTouch)
-                .clip(CircleShape)
-                .semantics {
-                    role = Role.Button
-                    contentDescription = "Buscar"
-                    traversalIndex = 0f
+                    if (index != items.lastIndex) {
+                        Spacer(Modifier.width(8.dp))
+                    }
                 }
-                .focusRequester(searchFR)
-                .focusable()
-                .focusProperties {
-                    right = firstTabFR
-                    left = avatarFR
-                    down = downDestination ?: FocusRequester.Default
-                }
-                .onFocusChanged { searchFocused = it.isFocused }
-                .border(
-                    width = if (searchFocused) d.focusRingThickness else 0.dp,
-                    color = if (searchFocused) ringColor else Color.Transparent,
-                    shape = CircleShape
-                )
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) { onSearchClick() }
-                .background(color = Color.Transparent)
-        ) {
-            // Simple magnifying glass icon (drawn)
-            Canvas(
-                modifier = Modifier
-                    .size(20.dp)
-                    .align(Alignment.Center)
-                    .clearAndSetSemantics { /* decorative */ }
-            ) {
-                drawCircle(
-                    color = c.textPrimary,
-                    radius = size.minDimension * 0.35f,
-                    style = Stroke(width = 2.dp.toPx())
-                )
-                drawLine(
-                    color = c.textPrimary,
-                    start = androidx.compose.ui.geometry.Offset(
-                        x = size.width * 0.65f,
-                        y = size.height * 0.65f
-                    ),
-                    end = androidx.compose.ui.geometry.Offset(
-                        x = size.width * 0.9f,
-                        y = size.height * 0.9f
-                    ),
-                    strokeWidth = 2.dp.toPx(),
-                    cap = StrokeCap.Round
-                )
             }
         }
 
@@ -347,6 +356,7 @@ fun HomeHeader(
         )
 
         // Avatar aligned to end
+        val ringColor = c.accent
         Box(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
