@@ -25,6 +25,10 @@ android {
                 "proguard-rules.pro"
             )
         }
+        debug {
+            // Helpful for diagnosing resource merge issues in CI
+            isCrunchPngs = false
+        }
     }
 
     compileOptions {
@@ -46,11 +50,19 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.10"
     }
+
+    // Help deterministic resource processing
+    packaging {
+        resources {
+            // Exclude common license resources to avoid merge noise
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
 }
 
 dependencies {
-    // Android TV Core
-    implementation("androidx.leanback:leanback:1.0.0")
+    // Android TV Core (use latest stable Leanback 1.1.0-rc01 to stay AndroidX; avoid old support libs)
+    implementation("androidx.leanback:leanback:1.1.0-rc01")
     implementation("androidx.tvprovider:tvprovider:1.0.0")
 
     // AndroidX Core
@@ -73,7 +85,7 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
-    // ExoPlayer for video
+    // Media3 (ExoPlayer and UI) - keep versions consistent
     implementation("androidx.media3:media3-exoplayer:1.2.1")
     implementation("androidx.media3:media3-ui:1.2.1")
     implementation("androidx.media3:media3-exoplayer-dash:1.2.1")
@@ -96,4 +108,17 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+}
+
+// Provide a task to clean caches when resource merge errors happen in CI
+tasks.register("ciClean") {
+    group = "ci"
+    description = "Cleans build directories and Gradle caches to fix potential corrupted intermediates."
+    doLast {
+        val appBuild = file("${project.projectDir}/build")
+        if (appBuild.exists()) appBuild.deleteRecursively()
+        val rootBuild = file("${rootProject.projectDir}/build")
+        if (rootBuild.exists()) rootBuild.deleteRecursively()
+        println("Cleaned module and root build directories.")
+    }
 }

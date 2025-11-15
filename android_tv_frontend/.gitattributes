@@ -1,0 +1,4 @@
+# Keep Gradle wrapper scripts executable on all platforms/CI
+gradlew text eol=lf
+gradlew.bat text eol=crlf
+*.sh text eol=lf
