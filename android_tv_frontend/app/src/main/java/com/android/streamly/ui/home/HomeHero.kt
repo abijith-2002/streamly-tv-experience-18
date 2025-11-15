@@ -6,17 +6,18 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -38,21 +39,23 @@ import com.android.streamly.ui.theme.StreamlyTheme
 /**
  * PUBLIC_INTERFACE
  * HomeHero
- * A TV-ready, pixel-aligned hero section that reproduces the background slice and right-edge mask
- * behavior from assets/home-page-screen_1-2.html using a 1920x1080 baseline, scaled responsively.
+ * Pixel-accurate hero section for Android TV using a 1920x1080 baseline, aligned to the design
+ * references in assets/home-page-screen_1-2.html and CSS tokens.
  *
  * Behavior and layout:
- * - Uses a 1920x1080 baseline and scales all coordinates by available width to fit 1080p and 4K.
- * - Hero viewport height is kept proportional to baseline 444px height (scale * 444), matching design.
- * - Central main slice placed at baseline (left: 88, width: 1744, height: 444).
- * - Right mask gradient emulates the 48px masked slice (left: 1872, width: 48, height: 444).
- * - Title/metadata/CTA overlay with pixel-exact baseline offsets, scaled to current viewport.
- * - CTA is focusable and provides visual feedback consistent with TV focus rings.
+ * - Uses 1920x1080 as baseline. All coordinates and sizes inside the hero scale by width.
+ * - Hero height follows baseline 444px (scaled) per the Highlights section in the asset.
+ * - Background is composed of:
+ *   - A main slice positioned at left: 88px, width: 1744px, height: 444px (scaled).
+ *   - A right mask slice at left: 1872px, width: 48px (scaled), fading to background.
+ *   - A left soft mask at left: 0px, width: 88px (scaled), fading from background into the main slice.
+ * - Overlay title/metadata/CTA are placed with pixel-exact baseline offsets (scaled).
+ * - CTA is focusable, uses Streamly theme tokens for colors, focus ring thickness, and typography.
  *
  * Parameters:
- * - hero: The hero item data (title and optional image URL; currently used for title overlay)
+ * - hero: The hero item data (title used for overlay)
  * - modifier: Optional modifier to attach focus and layout behavior
- * - onCtaClick: Callback when "Ver ahora" CTA is activated
+ * - onCtaClick: Callback when the CTA is activated
  */
 @Composable
 fun HomeHero(
@@ -64,19 +67,25 @@ fun HomeHero(
     val t = StreamlyTheme.typography
     val d = StreamlyTheme.dimens
 
-    // Baseline for the home screen (width=1920, heroHeight=444) from the assets.
+    // 1920x1080 baseline (matches assets screen)
     val baseW = 1920f
     val baseHeroH = 444f
 
-    // Elements in the hero area from assets (all in pixels relative to screen baseline)
+    // Background slices (from assets/home-page-screen_1-2.html):
+    // - Main slice: left=88, width=1744
+    // - Right mask: left=1872, width=48
     val mainSliceLeft = 88f
     val mainSliceW = 1744f
     val rightMaskLeft = 1872f
     val rightMaskW = 48f
 
-    // Overlay text and CTA baseline coordinates (relative to hero viewport)
-    // These are chosen to align visually with the design spacing and readable areas.
-    val overlayLeft = 176f // 88 (slice left) + ~88 spacing
+    // Left mask width equals the gap before the main slice
+    val leftMaskLeft = 0f
+    val leftMaskW = mainSliceLeft
+
+    // Overlay text/CTA baseline positions (relative to hero viewport)
+    // Chosen to match typical safe-region spacing and design spacing from the assets.
+    val overlayLeft = 176f   // 88 (slice left) + 88 spacing to keep text away from edge
     val titleTop = 40f
     val metaTop = 110f
     val ctaTop = 180f
@@ -88,11 +97,12 @@ fun HomeHero(
         modifier = modifier
             .fillMaxWidth()
     ) {
-        // Scale factor based on current width, preserving 16:9 baseline proportions for coordinates.
+        // Compute scale from available width using 1920 baseline. This preserves pixel-exact ratios
+        // for 1080p and 4K, as required.
         val scale = maxWidth.value / baseW
         fun s(px: Float): Dp = (px * scale).dp
 
-        // Compute scaled height for the hero viewport
+        // Scaled hero height
         val heroHeight = s(baseHeroH)
 
         // Root hero viewport
@@ -101,9 +111,26 @@ fun HomeHero(
                 .fillMaxWidth()
                 .height(heroHeight)
         ) {
-            // Main hero slice: use a rich gradient placeholder replicating the "image slice"
-            // The actual images are design references; we simulate the hero background with a gradient
-            // and dark overlay to ensure text readability.
+            // LEFT MASK: Fade from background (left) into transparent (right)
+            // This emulates a soft edge before the main slice, maintaining the visual blending
+            // similar to how the CSS/right mask works on the opposite side.
+            Box(
+                modifier = Modifier
+                    .offset(x = s(leftMaskLeft), y = 0.dp)
+                    .width(s(leftMaskW))
+                    .height(s(baseHeroH))
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                c.background,      // full background at extreme left
+                                Color.Transparent  // blend into the main slice area
+                            )
+                        )
+                    )
+            )
+
+            // MAIN HERO SLICE: Positioned at left=88, width=1744, height=444 (all scaled).
+            // We use a rich gradient placeholder in lieu of actual images, matching the brand palette.
             Box(
                 modifier = Modifier
                     .offset(x = s(mainSliceLeft), y = 0.dp)
@@ -111,19 +138,18 @@ fun HomeHero(
                     .height(s(baseHeroH))
                     .background(
                         brush = Brush.linearGradient(
-                            // Colors chosen from design tokens (common.css): 477f9b, 8d4ca7, 4271d4
                             colors = listOf(
-                                Color(0xFF477F9B),
-                                Color(0xFF8D4CA7),
-                                Color(0xFF4271D4)
+                                Color(0xFF477F9B), // approximate to design gradient left
+                                Color(0xFF8D4CA7), // mid
+                                Color(0xFF4271D4)  // right
                             )
                         )
                     )
             ) {
-                // Bottom gradient to enhance text legibility against the hero
+                // Bottom gradient for legibility over imagery
                 Box(
                     modifier = Modifier
-                        .matchParentSize()
+                        .fillMaxSize()
                         .background(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
@@ -135,7 +161,7 @@ fun HomeHero(
                 )
             }
 
-            // Right edge mask: emulate the 48px masked slice by blending to background.
+            // RIGHT MASK: Emulate 48px masked slice at left=1872; fade to background
             Box(
                 modifier = Modifier
                     .offset(x = s(rightMaskLeft), y = 0.dp)
@@ -143,16 +169,15 @@ fun HomeHero(
                     .height(s(baseHeroH))
                     .background(
                         brush = Brush.horizontalGradient(
-                            // Transparent at left edge of mask, to full background at right edge.
                             colors = listOf(
-                                Color.Transparent,
-                                c.background
+                                Color.Transparent, // transparent at boundary with main slice
+                                c.background       // full background towards the far right
                             )
                         )
                     )
             )
 
-            // Overlay: Title
+            // Overlay: Title (typo-25 mapping -> titleXL)
             BasicText(
                 text = hero?.title ?: "Destacado",
                 modifier = Modifier
@@ -165,7 +190,7 @@ fun HomeHero(
                 )
             )
 
-            // Overlay: Metadata (placeholder copy, optional)
+            // Overlay: Metadata (typo-26 mapping -> bodyL)
             BasicText(
                 text = "Acción • Ciencia ficción • 2 h 13 min",
                 modifier = Modifier
@@ -206,10 +231,11 @@ fun HomeHero(
                         interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
                     )
             ) {
+                // Center the text vertically with a baseline offset (approx. 12px on baseline)
                 BasicText(
                     text = "Ver ahora",
                     modifier = Modifier
-                        .offset(x = s(24f), y = s(14f)),
+                        .offset(x = s(24f), y = s(12f)),
                     style = t.navActive.merge(
                         TextStyle(
                             color = c.onAccent,
