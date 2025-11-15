@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
@@ -190,6 +191,7 @@ fun HomeHeader(
                         contentDescription = "Buscar"
                     }
                     .focusRequester(searchFR)
+                    .focusable()
                     .focusProperties {
                         // Right goes to first tab when available; left loops to avatar (wrap)
                         right = firstTabFR
@@ -254,6 +256,7 @@ fun HomeHeader(
                         contentDescription = "Perfil"
                     }
                     .focusRequester(avatarFR)
+                    .focusable()
                     .focusProperties {
                         // Left goes to last tab (if present); right loops to search
                         left = lastTabFR
@@ -314,6 +317,7 @@ fun HomeHeader(
                             stateDescription = if (isActive) "seleccionada" else "no seleccionada"
                         }
                         .focusRequester(tabFRs[index])
+                        .focusable()
                         .focusProperties {
                             left = if (index == 0) searchFR else tabFRs[index - 1]
                             right = if (index == items.size - 1) avatarFR else tabFRs[index + 1]
