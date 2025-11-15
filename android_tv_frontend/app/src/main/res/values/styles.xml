@@ -8,10 +8,11 @@
         <item name="android:colorBackground">@color/tv_background</item>
     </style>
 
-    <!-- Splash theme if/when a splash screen is used; ensures dark background -->
+    <!-- Splash theme ensures dark background and full-screen look, TV-friendly -->
     <style name="SplashTheme" parent="Theme.Leanback">
         <item name="android:windowBackground">@color/tv_background</item>
         <item name="android:colorBackground">@color/tv_background</item>
-        <!-- Keep landscape and overscan-safe design in layouts -->
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowFullscreen">true</item>
     </style>
 </resources>
