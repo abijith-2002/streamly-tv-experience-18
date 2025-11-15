@@ -22,18 +22,21 @@ import com.android.streamly.ui.theme.StreamlyTheme
  * Parameters:
  * - items: list of navigation entries
  * - activeIndex: index of the active entry
+ * - modifier: optional modifier to attach focus and layout behavior
  */
 @Composable
 fun HomeHeader(
     items: List<NavItem>,
-    activeIndex: Int
+    activeIndex: Int,
+    modifier: Modifier = Modifier
 ) {
     val t = StreamlyTheme.typography
     val c = StreamlyTheme.colors
     val d = StreamlyTheme.dimens
 
     Row(
-        horizontalArrangement = Arrangement.spacedBy(d.spaceLg)
+        horizontalArrangement = Arrangement.spacedBy(d.spaceLg),
+        modifier = modifier
     ) {
         items.forEachIndexed { index, item ->
             val active = index == activeIndex || item.active

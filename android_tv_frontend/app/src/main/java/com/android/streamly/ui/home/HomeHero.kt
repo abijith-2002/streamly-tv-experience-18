@@ -19,17 +19,19 @@ import com.android.streamly.ui.theme.StreamlyTheme
  *
  * Parameters:
  * - hero: The hero item data (image/title not yet rendered; just a themed block)
+ * - modifier: optional modifier to attach focus and layout behavior
  */
 @Composable
 fun HomeHero(
-    hero: HeroItem?
+    hero: HeroItem?,
+    modifier: Modifier = Modifier
 ) {
     val d = StreamlyTheme.dimens
     val c = StreamlyTheme.colors
 
     // For now, render a simple accent-colored wide box to mark hero area.
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .heightIn(min = d.spaceXl * 10f) // approx min height using spacing token
             .aspectRatio(1744f / 444f) // matches figma slice proportion

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import com.android.streamly.model.home.RailSection
@@ -17,17 +18,20 @@ import com.android.streamly.ui.theme.StreamlyTheme
  *
  * Parameters:
  * - section: the rail section data
+ * - modifier: optional modifier to attach focus and layout behavior
  */
 @Composable
 fun HomeRail(
-    section: RailSection
+    section: RailSection,
+    modifier: Modifier = Modifier
 ) {
     val d = StreamlyTheme.dimens
     val t = StreamlyTheme.typography
     val c = StreamlyTheme.colors
 
     Column(
-        verticalArrangement = Arrangement.spacedBy(d.spaceMd)
+        verticalArrangement = Arrangement.spacedBy(d.spaceMd),
+        modifier = modifier
     ) {
         BasicText(
             text = section.title,
