@@ -1,1 +1,3 @@
-# streamly-tv-experience-18
+# Project Repository
+
+This is the initial README file for the project.
