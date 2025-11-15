@@ -64,6 +64,17 @@ class MainActivity : FragmentActivity() {
                         CardItem(id = "c4", title = "2012"),
                         CardItem(id = "c5", title = "Ad Astra")
                     )
+                ),
+                // New sample section to exercise the TV Channels variant
+                RailSection(
+                    id = "r3",
+                    title = "Canales de TV",
+                    items = listOf(
+                        // Progress ratio ~80/207 to match assets small progress
+                        CardItem(id = "tv1", title = "Marca Claro Radio", progress = Progress(current = 80, total = 207)),
+                        CardItem(id = "tv2", title = "E.T.", progress = Progress(current = 80, total = 207)),
+                        CardItem(id = "tv3", title = "Marca Claro Radio", progress = Progress(current = 80, total = 207))
+                    )
                 )
             )
 

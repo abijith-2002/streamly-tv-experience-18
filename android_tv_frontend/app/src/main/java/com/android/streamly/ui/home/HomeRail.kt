@@ -28,7 +28,9 @@ import com.android.streamly.ui.theme.StreamlyTheme
  * Behavior:
  * - Renders section title using typography tokens (typo-24 -> t.titleL)
  * - Left offset aligns to 1920x1080 baseline using theme spacings (88px = 2*spaceXl + spaceLg)
- * - LazyRow rendering with exact card sizes and inter-card gaps (special handling for "Seguí viendo")
+ * - LazyRow rendering with exact card sizes and inter-card gaps:
+ *   - "Seguí viendo": first card 474x329, others 412x312, first gap 9px then 40px
+ *   - "Canales de TV": cards 745x212 (second can be 221px), first gap 0px then 82px
  * - Focusable rail group to support D-pad navigation across items
  *
  * Parameters:
@@ -48,29 +50,41 @@ fun HomeRail(
     // 88px = 2 * spaceXl (32) + spaceLg (24)
     val leftOffset = d.spaceXl + d.spaceXl + d.spaceLg
 
-    // Vertical spacing between title and the row is ~13px in assets; approximate with 12-16dp
-    val titleToRowSpacing = 13.dp
-
     BoxWithConstraints(modifier = modifier) {
-        // Scale factors to maintain pixel-accurate geometry across resolutions, using 1920 baseline
+        // Scale using baseline width 1920 to maintain pixel-accurate geometry
         val baseW = 1920f
         val scale = maxWidth.value / baseW
-
         fun s(px: Float): Dp = (px * scale).dp
 
-        // Default card geometry for "Seguí viendo" as per assets:
-        // First card: 474x329; Others: 412x312; gaps: first->second 9px, then 40px
-        val isSeguiViendo = section.title.trim().lowercase().contains("seguí viendo")
+        val title = section.title.trim()
+        val isSeguiViendo = title.equals("segui viendo", ignoreCase = true) ||
+            title.equals("seguí viendo", ignoreCase = true)
+        val isTvChannels = title.equals("canales de tv", ignoreCase = true)
 
-        // Constants in px (assets)
+        // Title-to-row spacing per assets:
+        // - Seguí viendo: ~13px
+        // - Canales de TV: 56px (1040 -> 1096)
+        val titleToRowSpacingPx = when {
+            isTvChannels -> 56f
+            isSeguiViendo -> 13f
+            else -> 16f // default safe spacing
+        }
+
+        // Geometry for rails
+        // Seguí viendo (assets)
         val bigW = 474f
         val bigH = 329f
         val smallW = 412f
         val smallH = 312f
+        val gapAfterFirstSegui = 9f
+        val gapDefaultSegui = 40f
 
-        // Gaps (assets)
-        val gapAfterFirst = 9f
-        val gapDefault = 40f
+        // Canales de TV (assets)
+        val tvW = 745f
+        val tvH = 212f
+        val tvHSecond = 221f // second card can be taller in assets
+        val gapFirstTv = 0f
+        val gapNextTv = 82f
 
         Column(
             modifier = Modifier
@@ -87,33 +101,54 @@ fun HomeRail(
                 )
             )
 
-            Spacer(modifier = Modifier.height(titleToRowSpacing))
+            Spacer(modifier = Modifier.height(s(titleToRowSpacingPx)))
 
             // Focusable row of items
             LazyRow(
                 modifier = Modifier.focusGroup()
             ) {
-                // Render items with custom pre-spacing to match exact gaps
                 itemsIndexed(section.items) { index, card ->
                     // Prepend dynamic spacer BEFORE each item except index 0
                     if (index > 0) {
-                        // For the "Seguí viendo" rail, first gap is 9px, then 40px
-                        val px = if (isSeguiViendo && index == 1) gapAfterFirst else gapDefault
+                        val px = when {
+                            isSeguiViendo && index == 1 -> gapAfterFirstSegui
+                            isSeguiViendo -> gapDefaultSegui
+                            isTvChannels && index == 1 -> gapFirstTv
+                            isTvChannels -> gapNextTv
+                            else -> 40f
+                        }
                         Spacer(modifier = Modifier.width(s(px)))
                     }
 
-                    // Card size: first bigger, others standard, only for "Seguí viendo"
-                    val (wPx, hPx) = if (isSeguiViendo && index == 0) {
-                        bigW to bigH
+                    if (isSeguiViendo) {
+                        // Poster variant with size differences for the first card
+                        val (wPx, hPx) = if (index == 0) bigW to bigH else smallW to smallH
+                        HomeCard(
+                            card = card,
+                            width = s(wPx),
+                            height = s(hPx),
+                            variant = HomeCardVariant.Default
+                        )
+                    } else if (isTvChannels) {
+                        // TV Channel card variant
+                        val hPx = if (index == 1) tvHSecond else tvH
+                        HomeCard(
+                            card = card,
+                            width = s(tvW),
+                            height = s(hPx),
+                            variant = HomeCardVariant.TvChannel,
+                            showLiveBadge = true,
+                            showChannelIcon = true
+                        )
                     } else {
-                        smallW to smallH
+                        // Default sizing for other sections (fallback)
+                        HomeCard(
+                            card = card,
+                            width = s(smallW),
+                            height = s(smallH),
+                            variant = HomeCardVariant.Default
+                        )
                     }
-
-                    HomeCard(
-                        card = card,
-                        width = s(wPx),
-                        height = s(hPx)
-                    )
                 }
             }
         }
