@@ -250,8 +250,8 @@ fun HomeHero(
             var ctaFocused by remember { mutableStateOf(false) }
 
             val ctaShape = RoundedCornerShape(s(ctaRadius))
-            // Focus ring uses theme accent at high alpha for strong contrast on dark background
-            val ringColor = c.accent.copy(alpha = 0.85f)
+            // Focus ring uses fully opaque accent for WCAG contrast on dark background
+            val ringColor = c.accent
             val ctaBg = if (ctaFocused) c.accent.copy(alpha = 0.95f) else c.accent
 
             Box(

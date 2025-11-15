@@ -207,8 +207,8 @@ fun HomeHeader(
 
             // Search button with focus ring
             var searchFocused by remember { mutableStateOf(false) }
-            // Focus ring uses theme accent at high alpha for strong contrast on dark background
-            val ringColor = c.accent.copy(alpha = 0.85f)
+            // Focus ring uses fully opaque accent for WCAG contrast on dark background
+            val ringColor = c.accent
             Box(
                 modifier = Modifier
                     .offset(x = searchLeft, y = searchTop)

@@ -141,8 +141,8 @@ private fun DefaultPosterCard(
 
     var focused by remember { mutableStateOf(false) }
     val cardShape = RoundedCornerShape(d.radiusSm)
-    // Focus ring uses theme accent at high alpha for strong contrast on dark card/background
-    val focusRingColor = c.accent.copy(alpha = 0.85f)
+    // Focus ring uses fully opaque accent for WCAG contrast on dark backgrounds
+    val focusRingColor = c.accent
     val cardBorderColor = if (focused) focusRingColor else Color.Transparent
 
     Box(
@@ -305,8 +305,8 @@ private fun TvChannelCard(
 
     // Focus and ring
     var focused by remember { mutableStateOf(false) }
-    // Use theme accent at high alpha for strong contrast on dark background
-    val ringColor = c.accent.copy(alpha = 0.85f)
+    // Use fully opaque accent for WCAG contrast on dark background
+    val ringColor = c.accent
     val borderColor = if (focused) ringColor else Color.Transparent
     val cardShape = RoundedCornerShape(d.radiusMd)
 
