@@ -1,12 +1,12 @@
 package com.android.streamly.ui.home
 
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -21,15 +21,22 @@ import com.android.streamly.ui.theme.StreamlyTheme
  * PUBLIC_INTERFACE
  * HomeScreen
  * Scaffolding for the Android TV Home screen. Establishes a persistent header slot,
- * a main 16:9 content area aligned with a 1920x1080 baseline, and basic focus traversal
- * placeholders between header, hero, and the first rail. Uses StreamlyTheme tokens.
+ * a main 16:9 content area aligned with a 1920x1080 baseline, and a predictable D-Pad focus model
+ * between Header -> Hero -> Rails using FocusRequester and focusProperties.
+ *
+ * Focus model:
+ * - Initial focus: Header first tab
+ * - Header DOWN -> Hero CTA
+ * - Hero UP -> Header first tab, DOWN -> First rail (first card)
+ * - Rail i UP -> Rail i-1 (or Hero for the first rail)
+ * - Rail i DOWN -> Rail i+1; last rail blocks DPAD_DOWN (boundary)
  *
  * Parameters:
  * - nav: List of navigation items for the header
  * - activeIndex: The index of the active navigation entry
  * - hero: Current hero item
  * - rails: Content rail sections below the hero
- * - contentPadding: Optional padding for content insets (unused in this placeholder)
+ * - contentPadding: Optional padding for content insets
  */
 @Composable
 fun HomeScreen(
@@ -41,10 +48,10 @@ fun HomeScreen(
 ) {
     val spacing = StreamlyTheme.dimens
 
-    // Focus requesters for basic traversal placeholders
-    val headerFR = remember { FocusRequester() }
+    // Focus requesters for traversal boundaries
+    val headerFirstTabFR = remember { FocusRequester() }
     val heroFR = remember { FocusRequester() }
-    val firstRailFR = remember { FocusRequester() }
+    val railEntryFRs = remember(rails.size) { List(rails.size) { FocusRequester() } }
 
     StreamlyTheme {
         HomeScaffold(
@@ -55,13 +62,12 @@ fun HomeScreen(
                 HomeHeader(
                     items = nav,
                     activeIndex = activeIndex,
-                    modifier = Modifier
-                        .focusRequester(headerFR)
-                        .focusable()
-                        .focusProperties {
-                            // Move focus down from header into the hero
-                            down = heroFR
-                        }
+                    // Provide a FocusRequester for down traversal (header -> hero)
+                    downDestination = heroFR,
+                    // Expose first tab FocusRequester to be targeted by hero/rails
+                    firstTabExternalFR = headerFirstTabFR,
+                    // Auto focus to first tab when screen loads
+                    autoFocusFirstTab = true
                 )
             },
             content = {
@@ -71,36 +77,49 @@ fun HomeScreen(
                         .fillMaxSize()
                         .padding(bottom = spacing.spaceMd) // keep some breathing room at bottom
                 ) {
+                    // Hero with explicit up/down destinations
                     HomeHero(
                         hero = hero,
                         modifier = Modifier
                             .focusRequester(heroFR)
-                            .focusable()
                             .focusProperties {
-                                // Up returns to header, down goes to the first rail
-                                up = headerFR
-                                down = firstRailFR
-                            }
+                                // Up returns to header first tab, down goes to the first rail entry
+                                up = headerFirstTabFR
+                                down = railEntryFRs.firstOrNull() ?: FocusRequester.Default
+                            },
+                        upDestination = headerFirstTabFR,
+                        downDestination = railEntryFRs.firstOrNull(),
+                        onCtaClick = { /* TODO: navigate to playback/info */ }
                     )
 
+                    // Rails - link focus between consecutive rails and bound last rail DOWN
                     rails.forEachIndexed { index, section ->
-                        val railModifier = if (index == 0) {
-                            Modifier
-                                .focusRequester(firstRailFR)
-                                .focusable()
-                                .focusProperties {
-                                    // Moving up from the first rail returns to hero
-                                    up = heroFR
-                                }
+                        val upDest = if (index == 0) {
+                            // From first rail up goes to the hero container
+                            heroFR
                         } else {
-                            Modifier
+                            railEntryFRs[index - 1]
+                        }
+                        val downDest = if (index == rails.lastIndex) {
+                            // Last rail: trap DOWN within the same rail to avoid experimental API usage
+                            railEntryFRs[index]
+                        } else {
+                            railEntryFRs[index + 1]
                         }
 
                         HomeRail(
                             section = section,
-                            modifier = railModifier
+                            // Attach entry FocusRequester to the first card in each rail
+                            entryFocusRequester = railEntryFRs[index],
+                            upDestination = upDest,
+                            downDestination = downDest
                         )
                     }
+                }
+
+                // Initial focus: ensure header first tab gets focus on first composition
+                LaunchedEffect(Unit) {
+                    headerFirstTabFR.requestFocus()
                 }
             }
         )

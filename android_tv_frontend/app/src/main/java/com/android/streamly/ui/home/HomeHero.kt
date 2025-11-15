@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
@@ -42,32 +43,26 @@ import com.android.streamly.ui.theme.StreamlyTheme
  * Pixel-accurate hero section for Android TV using a 1920x1080 baseline, aligned to
  * assets/home-page-screen_1-2.html and its CSS tokens.
  *
- * Verified layout against assets:
- * - Main slice at left=88px, width=1744px, height=444px
- * - Right mask at left=1872px, width=48px (fades to background)
- * - Soft left mask from background to transparent across 88px
- * - Overlay title/metadata/CTA offsets scaled from base widths; lateral offset uses theme spacings
- *   (2*spaceXl + spaceLg = 88px) in addition to the 88px main slice offset.
- *
- * Scaling:
- * - All coordinates scale from a 1920-wide baseline to preserve layout on 1080p and 4K.
- * - Heights and widths preserve 16:9 alignment and legibility with theme typography.
- *
  * Accessibility and TV focus:
  * - Root semantics content description references the hero title for screen readers.
  * - CTA is focusable and will be programmatically focused when the hero receives focus.
  * - CTA exposes Role.Button and descriptive contentDescription.
+ * - Up/Down focus traversal can be configured via upDestination/downDestination FocusRequesters.
  *
  * Parameters:
  * - hero: The hero item data (title used for overlay)
  * - modifier: Optional modifier to attach focus and layout behavior
  * - onCtaClick: Callback when the CTA is activated
+ * - upDestination: FocusRequester to move to when DPAD_UP is pressed (typically header first tab)
+ * - downDestination: FocusRequester to move to when DPAD_DOWN is pressed (typically first rail entry)
  */
 @Composable
 fun HomeHero(
     hero: HeroItem?,
     modifier: Modifier = Modifier,
-    onCtaClick: () -> Unit = {}
+    onCtaClick: () -> Unit = {},
+    upDestination: FocusRequester? = null,
+    downDestination: FocusRequester? = null
 ) {
     val c = StreamlyTheme.colors
     val t = StreamlyTheme.typography
@@ -106,10 +101,15 @@ fun HomeHero(
         modifier = modifier
             .fillMaxWidth()
             // Forward focus from the hero container into the CTA for immediate action affordance
+            .focusable()
             .onFocusChanged { state ->
                 if (state.isFocused) {
                     ctaFR.requestFocus()
                 }
+            }
+            .focusProperties {
+                up = upDestination ?: FocusRequester.Default
+                down = downDestination ?: FocusRequester.Default
             }
             .semantics {
                 // Root A11y description for the hero section
@@ -156,9 +156,9 @@ fun HomeHero(
                     .background(
                         brush = Brush.linearGradient(
                             colors = listOf(
-                                Color(0xFF477F9B), // approximates --color-477f9b
-                                Color(0xFF8D4CA7), // approximates --color-8d4ca7
-                                Color(0xFF4271D4)  // approximates --color-4271d4
+                                Color(0xFF477F9B),
+                                Color(0xFF8D4CA7),
+                                Color(0xFF4271D4)
                             )
                         )
                     )
@@ -220,19 +220,19 @@ fun HomeHero(
                 )
             )
 
-            // Overlay: CTA "Ver ahora" (Focusable TV button)
+            // Overlay: CTA "Ver ahora" (Focusable TV button) with consistent focus ring
             var ctaFocused by remember { mutableStateOf(false) }
 
             val ctaShape = RoundedCornerShape(s(ctaRadius))
+            val ringColor = c.accent.copy(alpha = 0.85f)
             val ctaBg = if (ctaFocused) c.accent.copy(alpha = 0.95f) else c.accent
-            val ctaBorderColor = if (ctaFocused) c.onAccent.copy(alpha = 0.85f) else Color.Transparent
 
             Box(
                 modifier = Modifier
                     .offset(x = s(overlayLeftPx), y = s(ctaTop))
                     .size(width = s(ctaW), height = s(ctaH))
                     .background(color = ctaBg, shape = ctaShape)
-                    .border(width = d.focusRingThickness, color = ctaBorderColor, shape = ctaShape)
+                    .border(width = if (ctaFocused) d.focusRingThickness else 0.dp, color = if (ctaFocused) ringColor else Color.Transparent, shape = ctaShape)
                     .semantics {
                         role = Role.Button
                         val label = hero?.title ?: "Destacado"
@@ -240,6 +240,10 @@ fun HomeHero(
                     }
                     .focusRequester(ctaFR)
                     .focusable()
+                    .focusProperties {
+                        up = upDestination ?: FocusRequester.Default
+                        down = downDestination ?: FocusRequester.Default
+                    }
                     .onFocusChanged { state -> ctaFocused = state.isFocused }
                     .clickable(
                         enabled = true,

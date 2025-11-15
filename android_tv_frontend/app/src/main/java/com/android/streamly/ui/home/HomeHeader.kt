@@ -50,16 +50,21 @@ import com.android.streamly.ui.theme.StreamlyTheme
  * - Places logo (placeholder), search button, navigation tabs, and avatar with exact coordinates
  * - Tabs are focusable and expose selected state (aria-current equivalent via semantics.selected)
  * - D-Pad navigation is wired: Search <-> Tabs <-> Avatar, with proper left/right traversal
- * - Exposes callbacks for tab selection, search click, and avatar click
+ * - Down navigation from header elements moves to the hero (downDestination) when provided
+ * - Exposes ability to auto-focus first tab and to attach external FocusRequesters to first/last tabs
  *
  * Parameters:
  * - items: List of NavItem representing the top nav
  * - activeIndex: Index of the active tab (selected)
- * - modifier: Optional modifier for the header root (will be wrapped in a focusGroup)
+ * - modifier: Optional modifier for the header root (wrapped in a focusGroup)
  * - onTabSelected: Callback when a tab is clicked/OK-pressed
  * - onTabFocusChanged: Optional callback when a tab gains/loses focus
  * - onSearchClick: Callback when search button is activated
  * - onAvatarClick: Callback when avatar is activated
+ * - downDestination: FocusRequester used when pressing DPAD_DOWN on any header element (usually hero)
+ * - firstTabExternalFR: External FocusRequester to attach to the first tab for cross-boundary navigation
+ * - lastTabExternalFR: External FocusRequester to attach to the last tab for cross-boundary navigation
+ * - autoFocusFirstTab: When true, requests focus on the first tab on first composition
  */
 @Composable
 fun HomeHeader(
@@ -69,10 +74,15 @@ fun HomeHeader(
     onTabSelected: (index: Int, item: NavItem) -> Unit = { _, _ -> },
     onTabFocusChanged: ((index: Int, hasFocus: Boolean) -> Unit)? = null,
     onSearchClick: () -> Unit = {},
-    onAvatarClick: () -> Unit = {}
+    onAvatarClick: () -> Unit = {},
+    downDestination: FocusRequester? = null,
+    firstTabExternalFR: FocusRequester? = null,
+    lastTabExternalFR: FocusRequester? = null,
+    autoFocusFirstTab: Boolean = false
 ) {
     val t = StreamlyTheme.typography
     val c = StreamlyTheme.colors
+    val d = StreamlyTheme.dimens
 
     // Header frame from assets (relative to screen safe area)
     val headerW = 1466.2799.dp
@@ -94,7 +104,7 @@ fun HomeHeader(
     // Search icon/button in TopNav
     val searchLeft = 26.753.dp
     val searchTop = 20.789.dp
-    val searchTouch = 36.dp // touch target; icon drawn inside
+    val searchTouch = 36.dp // focus target; icon drawn inside
 
     // Avatar focus halo and avatar positions (within TopNav)
     val avatarHaloLeft = 1068.7201.dp
@@ -108,8 +118,7 @@ fun HomeHeader(
     val tabLefts: List<Dp> = listOf(110.dp, 230.dp, 400.dp, 532.dp, 717.dp, 824.dp)
 
     // Active tab indicator (capsule) relative to header
-    // For "Inicio" (index 0) the left is 404.2799dp. This equals topNavLeft + tabLeft(0) - 13dp: 307.2799 + 110 - 13 = 404.2799
-    // We'll generalize as: topNavLeft + tabLeft - 13dp
+    // For "Inicio" (index 0) the left is 404.2799dp. This equals topNavLeft + tabLeft(0) - 13dp
     val activeCapsuleTop = 10.dp
     val activeCapsuleW = 96.dp
     val activeCapsuleH = 53.dp
@@ -117,27 +126,25 @@ fun HomeHeader(
     val activeCapsuleLeft = if (activeIndex in tabLefts.indices) {
         topNavLeft + tabLefts[activeIndex] - 13.dp
     } else {
-        // Fallback: if active index outside known positions, clamp to first
         topNavLeft + tabLefts.firstOrNull().orZero() - 13.dp
     }
 
     // Focus management: search, tabs, avatar
     val searchFR = remember { FocusRequester() }
     val avatarFR = remember { FocusRequester() }
-    val tabFRs = remember(items.size) { List(items.size) { FocusRequester() } }
+    val internalTabFRs = remember(items.size) { List(items.size) { FocusRequester() } }
 
-    val firstTabFR = if (tabFRs.isNotEmpty()) tabFRs.first() else FocusRequester.Default
-    val lastTabFR = if (tabFRs.isNotEmpty()) tabFRs.last() else FocusRequester.Default
+    val firstTabFR = firstTabExternalFR ?: (internalTabFRs.firstOrNull() ?: FocusRequester.Default)
+    val lastTabFR = lastTabExternalFR ?: (internalTabFRs.lastOrNull() ?: FocusRequester.Default)
 
-    // Root header: focus group container so directional nav enters this group and lands on children
+    // Root header: focus group container to scope directional nav within the header
     Box(
         modifier = modifier
             .focusGroup()
             .width(headerW)
             .height(headerH)
     ) {
-        // Logo placeholder group: assets say (left:0, top:15.8129, width:169.637, height:34.3558)
-        // We render a simple text placeholder with the correct position/size.
+        // Logo placeholder group
         Box(
             modifier = Modifier
                 .offset(x = 0.dp, y = 15.8129.dp)
@@ -155,7 +162,7 @@ fun HomeHeader(
             )
         }
 
-        // Active tab capsule drawn at header level (sits visually behind nav text)
+        // Active tab background capsule (behind nav text)
         Box(
             modifier = Modifier
                 .offset(x = activeCapsuleLeft, y = activeCapsuleTop)
@@ -180,7 +187,9 @@ fun HomeHeader(
                     .background(color = c.surface2, shape = RoundedCornerShape(topNavBgRadius))
             )
 
-            // Search button
+            // Search button with focus ring
+            var searchFocused by remember { mutableStateOf(false) }
+            val ringColor = c.accent.copy(alpha = 0.85f)
             Box(
                 modifier = Modifier
                     .offset(x = searchLeft, y = searchTop)
@@ -196,7 +205,11 @@ fun HomeHeader(
                         // Right goes to first tab when available; left loops to avatar (wrap)
                         right = firstTabFR
                         left = avatarFR
+                        // Down exits header to hero (if provided)
+                        down = downDestination ?: FocusRequester.Default
                     }
+                    .onFocusChanged { searchFocused = it.isFocused }
+                    .border(width = if (searchFocused) d.focusRingThickness else 0.dp, color = if (searchFocused) ringColor else Color.Transparent, shape = CircleShape)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
@@ -232,7 +245,7 @@ fun HomeHeader(
                 }
             }
 
-            // Avatar focus halo (appears stronger on focus; otherwise subtle)
+            // Avatar focus halo (subtle when not focused)
             var avatarFocused by remember { mutableStateOf(false) }
             val haloAlpha = if (avatarFocused) 0.2f else 0.0001f
             Box(
@@ -243,7 +256,7 @@ fun HomeHeader(
                     .background(color = c.accent.copy(alpha = haloAlpha))
             )
 
-            // Avatar (round) - using a placeholder colored circle
+            // Avatar (round) with focus ring
             Box(
                 modifier = Modifier
                     .offset(x = avatarLeft, y = avatarTop)
@@ -261,8 +274,11 @@ fun HomeHeader(
                         // Left goes to last tab (if present); right loops to search
                         left = lastTabFR
                         right = searchFR
+                        // Down exits header to hero (if provided)
+                        down = downDestination ?: FocusRequester.Default
                     }
                     .onFocusChanged { avatarFocused = it.isFocused }
+                    .border(width = if (avatarFocused) d.focusRingThickness else 0.dp, color = if (avatarFocused) ringColor else Color.Transparent, shape = CircleShape)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
@@ -293,7 +309,7 @@ fun HomeHeader(
                 }
                 val bgOnFocusAlpha = if (hasFocus) 0.12f else 0f
 
-                // Background on focus for better TV feedback (soft capsule)
+                // Focus background and ring capsule behind label
                 Box(
                     modifier = Modifier
                         .offset(x = tabX - 16.dp, y = 10.dp) // 16dp padding around label for focus background
@@ -303,7 +319,18 @@ fun HomeHeader(
                             color = c.onSurface.copy(alpha = bgOnFocusAlpha),
                             shape = RoundedCornerShape(activeCapsuleRadius)
                         )
+                        .border(
+                            width = if (hasFocus) d.focusRingThickness else 0.dp,
+                            color = if (hasFocus) ringColor else Color.Transparent,
+                            shape = RoundedCornerShape(activeCapsuleRadius)
+                        )
                 )
+
+                val frForTab = when {
+                    index == 0 && firstTabExternalFR != null -> firstTabExternalFR
+                    index in internalTabFRs.indices -> internalTabFRs[index]
+                    else -> null
+                }
 
                 // Tab text itself
                 BasicText(
@@ -316,11 +343,17 @@ fun HomeHeader(
                             contentDescription = item.title
                             stateDescription = if (isActive) "seleccionada" else "no seleccionada"
                         }
-                        .focusRequester(tabFRs[index])
+                        .then(if (frForTab != null) Modifier.focusRequester(frForTab) else Modifier)
                         .focusable()
                         .focusProperties {
-                            left = if (index == 0) searchFR else tabFRs[index - 1]
-                            right = if (index == items.size - 1) avatarFR else tabFRs[index + 1]
+                            left = if (index == 0) searchFR else {
+                                if (index - 1 in internalTabFRs.indices) internalTabFRs[index - 1] else firstTabFR
+                            }
+                            right = if (index == items.size - 1) avatarFR else {
+                                if (index + 1 in internalTabFRs.indices) internalTabFRs[index + 1] else lastTabFR
+                            }
+                            // Down exits header to hero (if provided)
+                            down = downDestination ?: FocusRequester.Default
                         }
                         .onFocusChanged {
                             hasFocus = it.isFocused
@@ -342,10 +375,12 @@ fun HomeHeader(
             }
         }
 
-        // Move initial focus into first tab if header gets initial focus from parent
-        LaunchedEffect(items.size) {
-            // No-op: focus is controlled by parent via FocusRequester; tabs have defined order.
-            // This hook is left for future usage if needed for programmatic focus.
+        // Optionally move initial focus to the first tab
+        LaunchedEffect(items.size, autoFocusFirstTab) {
+            if (autoFocusFirstTab) {
+                // Request focus to the first tab in header
+                firstTabFR.requestFocus()
+            }
         }
     }
 }

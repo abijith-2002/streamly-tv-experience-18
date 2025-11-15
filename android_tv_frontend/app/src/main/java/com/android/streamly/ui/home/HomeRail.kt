@@ -13,6 +13,9 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -31,16 +34,22 @@ import com.android.streamly.ui.theme.StreamlyTheme
  * - LazyRow rendering with exact card sizes and inter-card gaps:
  *   - "Seguí viendo": first card 474x329, others 412x312, first gap 9px then 40px
  *   - "Canales de TV": cards 745x212 (second can be 221px), first gap 0px then 82px
- * - Focusable rail group to support D-pad navigation across items
+ * - Focusable cards apply up/down focus destinations for predictable TV navigation
  *
  * Parameters:
  * - section: the rail section data
  * - modifier: optional modifier to attach focus and layout behavior
+ * - entryFocusRequester: optional FocusRequester attached to the first card in the row (used by parent to target this rail)
+ * - upDestination: FocusRequester to move to when DPAD_UP is pressed on any card (e.g., hero)
+ * - downDestination: FocusRequester to move to when DPAD_DOWN is pressed on any card (e.g., next rail or FocusRequester.Cancel)
  */
 @Composable
 fun HomeRail(
     section: RailSection,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    entryFocusRequester: FocusRequester? = null,
+    upDestination: FocusRequester? = null,
+    downDestination: FocusRequester? = null
 ) {
     val d = StreamlyTheme.dimens
     val t = StreamlyTheme.typography
@@ -103,7 +112,7 @@ fun HomeRail(
 
             Spacer(modifier = Modifier.height(s(titleToRowSpacingPx)))
 
-            // Focusable row of items
+            // Focus group row of items; children (cards) are the focus targets
             LazyRow(
                 modifier = Modifier.focusGroup()
             ) {
@@ -120,6 +129,17 @@ fun HomeRail(
                         Spacer(modifier = Modifier.width(s(px)))
                     }
 
+                    // Build a modifier per-card to attach entry focus and vertical traversal
+                    var cardModifier = Modifier
+                        .focusProperties {
+                            up = upDestination ?: FocusRequester.Default
+                            down = downDestination ?: FocusRequester.Default
+                        }
+
+                    if (index == 0 && entryFocusRequester != null) {
+                        cardModifier = cardModifier.focusRequester(entryFocusRequester)
+                    }
+
                     if (isSeguiViendo) {
                         // Poster variant with size differences for the first card
                         val (wPx, hPx) = if (index == 0) bigW to bigH else smallW to smallH
@@ -127,6 +147,7 @@ fun HomeRail(
                             card = card,
                             width = s(wPx),
                             height = s(hPx),
+                            modifier = cardModifier,
                             variant = HomeCardVariant.Default
                         )
                     } else if (isTvChannels) {
@@ -136,6 +157,7 @@ fun HomeRail(
                             card = card,
                             width = s(tvW),
                             height = s(hPx),
+                            modifier = cardModifier,
                             variant = HomeCardVariant.TvChannel,
                             showLiveBadge = true,
                             showChannelIcon = true
@@ -146,6 +168,7 @@ fun HomeRail(
                             card = card,
                             width = s(smallW),
                             height = s(smallH),
+                            modifier = cardModifier,
                             variant = HomeCardVariant.Default
                         )
                     }
