@@ -7,6 +7,7 @@ This app uses a TV-friendly themed splash screen:
 - Entry point: SplashActivity (launcher)
 - Transition: Navigates to MainActivity after ~600ms
 - No user interaction on splash
+- Design: Only centered text "Streamly" on dark background, no icons/images
 
 Files:
 - app/src/main/java/com/android/streamly/SplashActivity.kt

@@ -10,7 +10,7 @@ import androidx.fragment.app.FragmentActivity
  * PUBLIC_INTERFACE
  * SplashActivity
  * This activity serves as a lightweight, themed splash screen for Android TV.
- * It displays a dark background consistent with the app theme and a centered logo/title.
+ * It displays a dark background consistent with the app theme and a centered app title text only.
  * It has no user interaction and transitions to MainActivity after a short delay.
  */
 class SplashActivity : FragmentActivity() {
