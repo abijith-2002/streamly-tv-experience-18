@@ -62,6 +62,7 @@ import com.android.streamly.ui.theme.StreamlyTheme
  * - DPAD_CENTER only triggers selection callback (onTabSelected), not visual state
  * - Visual focus state via border ring or highlight
  * - Handles DPAD_LEFT/RIGHT to move focus across Search -> Tabs -> Avatar and back
+ * - Debug mode available to verify focus landing with temporary visible border
  *
  * Accessibility:
  * - Decorative shapes are removed from the a11y tree
@@ -79,7 +80,8 @@ fun HomeHeader(
     downDestination: FocusRequester? = null,
     firstTabExternalFR: FocusRequester? = null,
     lastTabExternalFR: FocusRequester? = null,
-    autoFocusFirstTab: Boolean = false
+    autoFocusFirstTab: Boolean = false,
+    debugFocusBorders: Boolean = false // Optional debug mode to verify focus landing
 ) {
     val t = StreamlyTheme.typography
     val c = StreamlyTheme.colors
@@ -267,7 +269,7 @@ fun HomeHeader(
                     // Pill geometry
                     val capsuleH = 28.dp
                     val capsuleRadius = 14.dp
-                    val capsuleW = (textWidthDp + capsuleHPad).coerceAtLeast(44.dp)
+                    val capsuleW = (textWidthDp + capsuleHPad * 2).coerceAtLeast(44.dp)
 
                     // Focused pill color (#9B0F0F)
                     val focusedPillColor = Color(0xFF9B0F0F)
@@ -295,6 +297,14 @@ fun HomeHeader(
                         modifier = Modifier
                             .height(capsuleH)
                             .wrapContentWidth()
+                            // Optional debug border to verify focus landing
+                            .then(
+                                if (debugFocusBorders && hasFocus) {
+                                    Modifier.border(2.dp, Color.Green, RoundedCornerShape(capsuleRadius))
+                                } else {
+                                    Modifier
+                                }
+                            )
                     ) {
                         // FOCUS PILL: Driven PURELY by focus state (hasFocus)
                         // Appears IMMEDIATELY when focus enters this tab via DPAD_LEFT/RIGHT
@@ -317,7 +327,8 @@ fun HomeHeader(
                             )
                         }
 
-                        // Tab text as focus target
+                        // Tab text as the single focus target
+                        // This is the ONLY focusable element - no parent focusable wrapping it
                         BasicText(
                             text = item.title,
                             modifier = Modifier
@@ -340,8 +351,11 @@ fun HomeHeader(
                                     }
                                     down = downDestination ?: FocusRequester.Default
                                 }
-                                .focusTarget() // explicit focus node - NOT nested in another focusable
-                                .focusable(interactionSource = tabIS) // connect focus to interactionSource
+                                // CRITICAL: focusTarget() must come BEFORE focusable() to establish the focus node
+                                .focusTarget()
+                                // Connect the focus node to InteractionSource to drive hasFocus state
+                                .focusable(interactionSource = tabIS, enabled = true)
+                                // Click handler is separate - does NOT consume or affect focus
                                 .clickable(
                                     interactionSource = tabIS,
                                     indication = null
