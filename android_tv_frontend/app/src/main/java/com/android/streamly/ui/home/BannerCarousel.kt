@@ -134,7 +134,8 @@ fun BannerCarousel(
                     shape = shape,
                     borderColor = c.accent,
                     focusRingThickness = d.focusRingThickness,
-                    unfocusedScale = d.bannerScaleUnfocused
+                    // Use a local unfocused scale to keep tokens only for banner sizing (requirement: 0.92–0.95)
+                    unfocusedScale = 0.94f
                 )
             }
         }
