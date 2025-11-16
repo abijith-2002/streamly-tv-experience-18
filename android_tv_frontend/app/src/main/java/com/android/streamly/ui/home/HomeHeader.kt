@@ -28,7 +28,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.key
@@ -252,22 +251,22 @@ fun HomeHeader(
 
                 // Tabs
                 items.forEachIndexed { index, item ->
-                    // Active no longer draws a static pill; we rely on focus only for the pill
+                    // Focus drives visuals; selected only updates semantics
                     val isActive = (index == activeIndex) || item.active
                     var hasFocus by remember { mutableStateOf(false) }
                     var textWidthPx by remember { mutableStateOf(0) }
                     val textWidthDp: Dp = with(density) { textWidthPx.toDp() }
 
-                    // Match the previous "Inicio" pill geometry: height 28dp, radius 14dp
+                    // Pill geometry
                     val capsuleH = 28.dp
                     val capsuleRadius = 14.dp
                     val capsuleW = (textWidthDp + capsuleHPad).coerceAtLeast(44.dp)
 
-                    // Dynamic focused pill color as requested (#9B0F0F)
+                    // Focused pill color (#9B0F0F)
                     val focusedPillColor = Color(0xFF9B0F0F)
                     val tabRingColor = c.accent
 
-                    // Text color rules: focused = onSurface; otherwise secondary (no static active styling)
+                    // Text color: focused primary, otherwise secondary
                     val textColor = if (hasFocus) c.onSurface else c.textSecondary
 
                     val frForTab = when {
@@ -281,7 +280,7 @@ fun HomeHeader(
                             .height(capsuleH)
                             .wrapContentWidth()
                     ) {
-                        // Focused pill background (only when focused)
+                        // Focus pill driven purely by focus state
                         if (hasFocus) {
                             Box(
                                 modifier = Modifier
@@ -300,7 +299,7 @@ fun HomeHeader(
                             )
                         }
 
-                        // Tab focusable text
+                        // Tab text as focus target
                         BasicText(
                             text = item.title,
                             modifier = Modifier
@@ -308,7 +307,6 @@ fun HomeHeader(
                                 .padding(horizontal = labelHPad)
                                 .semantics {
                                     role = Role.Tab
-                                    // Keep semantic "selected" to reflect active route, but it no longer drives visuals
                                     selected = isActive
                                     contentDescription = item.title
                                     stateDescription = if (isActive) "seleccionada" else "no seleccionada"
@@ -356,7 +354,6 @@ fun HomeHeader(
                                     }
                                 },
                             onTextLayout = { layout -> textWidthPx = layout.size.width },
-                            // Use the same type ramp for all tabs; bold/active styling removed to avoid static pill
                             style = t.nav.merge(
                                 TextStyle(
                                     fontSize = 16.sp,
