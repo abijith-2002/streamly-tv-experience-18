@@ -252,22 +252,23 @@ fun HomeHeader(
 
                 // Tabs
                 items.forEachIndexed { index, item ->
+                    // Active no longer draws a static pill; we rely on focus only for the pill
                     val isActive = (index == activeIndex) || item.active
                     var hasFocus by remember { mutableStateOf(false) }
                     var textWidthPx by remember { mutableStateOf(0) }
                     val textWidthDp: Dp = with(density) { textWidthPx.toDp() }
 
+                    // Match the previous "Inicio" pill geometry: height 28dp, radius 14dp
                     val capsuleH = 28.dp
                     val capsuleRadius = 14.dp
                     val capsuleW = (textWidthDp + capsuleHPad).coerceAtLeast(44.dp)
 
+                    // Dynamic focused pill color as requested (#9B0F0F)
+                    val focusedPillColor = Color(0xFF9B0F0F)
                     val tabRingColor = c.accent
-                    val textColor = when {
-                        hasFocus -> c.onSurface
-                        isActive -> c.onSurface
-                        else -> c.textSecondary
-                    }
-                    val focusBgAlpha = if (hasFocus) 0.12f else 0f
+
+                    // Text color rules: focused = onSurface; otherwise secondary (no static active styling)
+                    val textColor = if (hasFocus) c.onSurface else c.textSecondary
 
                     val frForTab = when {
                         index == 0 && firstTabExternalFR != null -> firstTabExternalFR
@@ -280,30 +281,19 @@ fun HomeHeader(
                             .height(capsuleH)
                             .wrapContentWidth()
                     ) {
-                        // Focus backdrop
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.Center)
-                                .size(width = capsuleW, height = capsuleH)
-                                .background(
-                                    color = c.onSurface.copy(alpha = focusBgAlpha),
-                                    shape = RoundedCornerShape(capsuleRadius)
-                                )
-                                .border(
-                                    width = if (hasFocus) d.focusRingThickness else 0.dp,
-                                    color = if (hasFocus) tabRingColor else Color.Transparent,
-                                    shape = RoundedCornerShape(capsuleRadius)
-                                )
-                                .clearAndSetSemantics { /* decorative */ }
-                        )
-                        // Active backdrop
-                        if (isActive) {
+                        // Focused pill background (only when focused)
+                        if (hasFocus) {
                             Box(
                                 modifier = Modifier
                                     .align(Alignment.Center)
                                     .size(width = capsuleW, height = capsuleH)
                                     .background(
-                                        color = c.accent.copy(alpha = 0.35f),
+                                        color = focusedPillColor,
+                                        shape = RoundedCornerShape(capsuleRadius)
+                                    )
+                                    .border(
+                                        width = d.focusRingThickness,
+                                        color = tabRingColor,
                                         shape = RoundedCornerShape(capsuleRadius)
                                     )
                                     .clearAndSetSemantics { /* decorative */ }
@@ -318,6 +308,7 @@ fun HomeHeader(
                                 .padding(horizontal = labelHPad)
                                 .semantics {
                                     role = Role.Tab
+                                    // Keep semantic "selected" to reflect active route, but it no longer drives visuals
                                     selected = isActive
                                     contentDescription = item.title
                                     stateDescription = if (isActive) "seleccionada" else "no seleccionada"
@@ -365,7 +356,8 @@ fun HomeHeader(
                                     }
                                 },
                             onTextLayout = { layout -> textWidthPx = layout.size.width },
-                            style = (if (isActive) t.navActive else t.nav).merge(
+                            // Use the same type ramp for all tabs; bold/active styling removed to avoid static pill
+                            style = t.nav.merge(
                                 TextStyle(
                                     fontSize = 16.sp,
                                     lineHeight = 20.sp,
