@@ -7,7 +7,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,6 +24,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusTarget
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -54,18 +54,15 @@ import com.android.streamly.ui.theme.StreamlyTheme
 /**
  * PUBLIC_INTERFACE
  * HomeHeader
- * Resized and centered header for Android TV with DPAD navigation:
- * - Top nav container is fixed to 579.5dp x 32dp, centered
- * - All nav items (Search, tabs, Avatar) are focusable with explicit left/right chaining
- * - Pill background appears IMMEDIATELY on focus (no DPAD_CENTER required)
- * - Pill is driven purely by focus state via collectIsFocusedAsState()
- * - DPAD_CENTER only triggers selection callback (onTabSelected), not visual state
- * - Visual focus state via border ring or highlight
- * - Handles DPAD_LEFT/RIGHT to move focus across Search -> Tabs -> Avatar and back
- * - Debug mode available to verify focus landing with temporary visible border
+ * Refactored header with flattened focus hierarchy for Android TV:
+ * - Each nav item is exactly one focus target (no nested focusables)
+ * - Strict modifier order: focusTarget() → focusable(interactionSource) → onFocusChanged(local isFocused) → clickable()
+ * - Pill visibility driven strictly by isFocused local state (appears IMMEDIATELY on DPAD_LEFT/RIGHT)
+ * - DPAD_CENTER only triggers selection logic via onTabSelected callback
+ * - No parent/child focus interception - single flat focus per item
  *
  * Accessibility:
- * - Decorative shapes are removed from the a11y tree
+ * - Decorative shapes removed from a11y tree
  * - Traversal group and indexes ensure TalkBack follows DPAD order
  */
 @Composable
@@ -81,7 +78,7 @@ fun HomeHeader(
     firstTabExternalFR: FocusRequester? = null,
     lastTabExternalFR: FocusRequester? = null,
     autoFocusFirstTab: Boolean = false,
-    debugFocusBorders: Boolean = false // Optional debug mode to verify focus landing
+    debugFocusBorders: Boolean = false
 ) {
     val t = StreamlyTheme.typography
     val c = StreamlyTheme.colors
@@ -91,7 +88,7 @@ fun HomeHeader(
     // Header sizing
     val headerH = 60.dp
 
-    // Fixed nav container size as requested
+    // Fixed nav container size
     val navWidth = 579.5.dp
     val topNavBgH = 32.dp
     val topNavBgRadius = 16.dp
@@ -124,8 +121,7 @@ fun HomeHeader(
                 traversalIndex = 0f
             }
     ) {
-        // Compute dynamic horizontal centering for "Claro video" between left edge and navbar's left edge.
-        // We keep the navbar fixed at 579.5.dp x 32.dp and centered; then compute the midpoint to place the label centered on it.
+        // Compute dynamic horizontal centering for "Claro video"
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
             val availableW = this.maxWidth
             val navLeft = (availableW - navWidth) / 2
@@ -155,7 +151,7 @@ fun HomeHeader(
             )
         }
 
-        // Centered TopNav background capsule with exact width/height
+        // Centered TopNav background capsule
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -164,7 +160,7 @@ fun HomeHeader(
                 .height(topNavBgH)
                 .align(Alignment.Center)
         ) {
-            // Background capsule
+            // Background capsule (decorative)
             Box(
                 modifier = Modifier
                     .matchParentSize()
@@ -182,13 +178,13 @@ fun HomeHeader(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 8.dp)
-                    // Make the nav row an explicit focus group; children are focus targets
                     .focusGroup()
             ) {
-                // Search button
+                // SEARCH BUTTON - Single flat focus target
+                var searchFocused by remember { mutableStateOf(false) }
                 val searchIS = remember { MutableInteractionSource() }
-                val searchFocused by searchIS.collectIsFocusedAsState()
                 val ringColor = c.accent
+
                 Box(
                     modifier = Modifier
                         .size(searchTouch)
@@ -206,15 +202,19 @@ fun HomeHeader(
                         }
                         .focusTarget()
                         .focusable(interactionSource = searchIS)
+                        .onFocusChanged { focusState ->
+                            searchFocused = focusState.isFocused
+                        }
+                        .clickable(
+                            interactionSource = searchIS,
+                            indication = null
+                        ) { onSearchClick() }
                         .border(
                             width = if (searchFocused) d.focusRingThickness else 0.dp,
                             color = if (searchFocused) ringColor else Color.Transparent,
                             shape = CircleShape
                         )
-                        .clickable(
-                            interactionSource = searchIS,
-                            indication = null
-                        ) { onSearchClick() }
+                        .background(color = Color.Transparent)
                         .onKeyEvent { ev ->
                             if (ev.type != KeyEventType.KeyDown) return@onKeyEvent false
                             when (ev.key) {
@@ -227,7 +227,6 @@ fun HomeHeader(
                                 else -> false
                             }
                         }
-                        .background(color = Color.Transparent)
                 ) {
                     Canvas(
                         modifier = Modifier
@@ -258,10 +257,9 @@ fun HomeHeader(
 
                 Spacer(Modifier.width(8.dp))
 
-                // Tabs - Pill appears IMMEDIATELY on focus via collectIsFocusedAsState()
+                // TAB ITEMS - Each is a single flat focus target with strict modifier order
                 items.forEachIndexed { index, item ->
-                    // isActive is used ONLY for semantics (selected state for screen readers)
-                    // It does NOT control the visual pill - only hasFocus does
+                    // isActive used ONLY for semantics (screen reader state)
                     val isActive = (index == activeIndex) || item.active
                     var textWidthPx by remember { mutableStateOf(0) }
                     val textWidthDp: Dp = with(density) { textWidthPx.toDp() }
@@ -271,21 +269,21 @@ fun HomeHeader(
                     val capsuleRadius = 14.dp
                     val capsuleW = (textWidthDp + capsuleHPad * 2).coerceAtLeast(44.dp)
 
-                    // Focused pill color (#9B0F0F)
+                    // Focused pill color
                     val focusedPillColor = Color(0xFF9B0F0F)
                     val tabRingColor = c.accent
 
-                    // InteractionSource collects focus state - THIS drives the pill visibility
+                    // LOCAL FOCUS STATE - drives pill visibility IMMEDIATELY on DPAD navigation
+                    var isFocused by remember { mutableStateOf(false) }
                     val tabIS = remember { MutableInteractionSource() }
-                    val hasFocus by tabIS.collectIsFocusedAsState()
 
-                    // Notify external listener when focus changes for this tab
-                    LaunchedEffect(hasFocus) {
-                        onTabFocusChanged?.invoke(index, hasFocus)
+                    // Notify external listener when focus changes
+                    LaunchedEffect(isFocused) {
+                        onTabFocusChanged?.invoke(index, isFocused)
                     }
 
-                    // Text color: focused primary, otherwise secondary
-                    val textColor = if (hasFocus) c.onSurface else c.textSecondary
+                    // Text color: focused uses primary (onSurface), otherwise secondary
+                    val textColor = if (isFocused) c.onSurface else c.textSecondary
 
                     val frForTab = when {
                         index == 0 && firstTabExternalFR != null -> firstTabExternalFR
@@ -297,19 +295,18 @@ fun HomeHeader(
                         modifier = Modifier
                             .height(capsuleH)
                             .wrapContentWidth()
-                            // Optional debug border to verify focus landing
                             .then(
-                                if (debugFocusBorders && hasFocus) {
+                                if (debugFocusBorders && isFocused) {
                                     Modifier.border(2.dp, Color.Green, RoundedCornerShape(capsuleRadius))
                                 } else {
                                     Modifier
                                 }
                             )
                     ) {
-                        // FOCUS PILL: Driven PURELY by focus state (hasFocus)
-                        // Appears IMMEDIATELY when focus enters this tab via DPAD_LEFT/RIGHT
-                        // No DPAD_CENTER required - focus alone triggers the pill
-                        if (hasFocus) {
+                        // FOCUS PILL - Driven STRICTLY by isFocused local state
+                        // Appears IMMEDIATELY on DPAD_LEFT/RIGHT focus change
+                        // No DPAD_CENTER required
+                        if (isFocused) {
                             Box(
                                 modifier = Modifier
                                     .align(Alignment.Center)
@@ -327,8 +324,8 @@ fun HomeHeader(
                             )
                         }
 
-                        // Tab text as the single focus target
-                        // This is the ONLY focusable element - no parent focusable wrapping it
+                        // Tab text - THE ONLY FOCUSABLE ELEMENT (no nested/parent focusables)
+                        // STRICT MODIFIER ORDER: focusTarget → focusable → onFocusChanged → clickable
                         BasicText(
                             text = item.title,
                             modifier = Modifier
@@ -351,18 +348,22 @@ fun HomeHeader(
                                     }
                                     down = downDestination ?: FocusRequester.Default
                                 }
-                                // CRITICAL: focusTarget() must come BEFORE focusable() to establish the focus node
+                                // 1. focusTarget() - Establishes the focus node
                                 .focusTarget()
-                                // Connect the focus node to InteractionSource to drive hasFocus state
+                                // 2. focusable(interactionSource) - Connects to interaction source
                                 .focusable(interactionSource = tabIS, enabled = true)
-                                // Click handler is separate - does NOT consume or affect focus
+                                // 3. onFocusChanged(local isFocused) - Updates local state IMMEDIATELY
+                                .onFocusChanged { focusState ->
+                                    isFocused = focusState.isFocused
+                                }
+                                // 4. clickable() - Separate from focus; only triggers selection
                                 .clickable(
                                     interactionSource = tabIS,
                                     indication = null
-                                ) { 
+                                ) {
                                     // DPAD_CENTER triggers selection callback ONLY
-                                    // Does NOT affect pill visibility - that's driven by focus
-                                    onTabSelected(index, item) 
+                                    // Does NOT toggle visual state (pill already shown via focus)
+                                    onTabSelected(index, item)
                                 }
                                 .onKeyEvent { ev ->
                                     if (ev.type != KeyEventType.KeyDown) return@onKeyEvent false
@@ -405,10 +406,11 @@ fun HomeHeader(
             }
         }
 
-        // Avatar halo (decorative)
+        // AVATAR HALO (decorative)
+        var avatarFocused by remember { mutableStateOf(false) }
         val avatarIS = remember { MutableInteractionSource() }
-        val avatarFocused by avatarIS.collectIsFocusedAsState()
         val haloAlpha = if (avatarFocused) 0.2f else 0.0001f
+
         Box(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
@@ -419,7 +421,7 @@ fun HomeHeader(
                 .clearAndSetSemantics { /* decorative */ }
         )
 
-        // Avatar
+        // AVATAR - Single flat focus target
         val ringColor = c.accent
         Box(
             modifier = Modifier
@@ -442,15 +444,18 @@ fun HomeHeader(
                 }
                 .focusTarget()
                 .focusable(interactionSource = avatarIS)
+                .onFocusChanged { focusState ->
+                    avatarFocused = focusState.isFocused
+                }
+                .clickable(
+                    interactionSource = avatarIS,
+                    indication = null
+                ) { onAvatarClick() }
                 .border(
                     width = if (avatarFocused) d.focusRingThickness else 0.dp,
                     color = if (avatarFocused) ringColor else Color.Transparent,
                     shape = CircleShape
                 )
-                .clickable(
-                    interactionSource = avatarIS,
-                    indication = null
-                ) { onAvatarClick() }
                 .onKeyEvent { ev ->
                     if (ev.type != KeyEventType.KeyDown) return@onKeyEvent false
                     when (ev.key) {
@@ -473,5 +478,3 @@ fun HomeHeader(
         }
     }
 }
-
-private fun Dp?.orZero(): Dp = this ?: 0.dp
