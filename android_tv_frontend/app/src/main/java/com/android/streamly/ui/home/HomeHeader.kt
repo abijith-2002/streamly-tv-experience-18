@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,7 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.focusTarget
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -176,9 +177,12 @@ fun HomeHeader(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 8.dp)
+                    // Make the nav row an explicit focus group; children are focus targets
+                    .focusGroup()
             ) {
                 // Search button
-                var searchFocused by remember { mutableStateOf(false) }
+                val searchIS = remember { MutableInteractionSource() }
+                val searchFocused by searchIS.collectIsFocusedAsState()
                 val ringColor = c.accent
                 Box(
                     modifier = Modifier
@@ -190,20 +194,20 @@ fun HomeHeader(
                             traversalIndex = 0f
                         }
                         .focusRequester(searchFR)
-                        .focusable()
                         .focusProperties {
                             right = firstTabFR
                             left = avatarFR
                             down = downDestination ?: FocusRequester.Default
                         }
-                        .onFocusChanged { searchFocused = it.isFocused }
+                        .focusTarget()
+                        .focusable(interactionSource = searchIS)
                         .border(
                             width = if (searchFocused) d.focusRingThickness else 0.dp,
                             color = if (searchFocused) ringColor else Color.Transparent,
                             shape = CircleShape
                         )
                         .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
+                            interactionSource = searchIS,
                             indication = null
                         ) { onSearchClick() }
                         .onKeyEvent { ev ->
@@ -253,7 +257,6 @@ fun HomeHeader(
                 items.forEachIndexed { index, item ->
                     // Focus drives visuals; selected only updates semantics
                     val isActive = (index == activeIndex) || item.active
-                    var hasFocus by remember { mutableStateOf(false) }
                     var textWidthPx by remember { mutableStateOf(0) }
                     val textWidthDp: Dp = with(density) { textWidthPx.toDp() }
 
@@ -265,6 +268,15 @@ fun HomeHeader(
                     // Focused pill color (#9B0F0F)
                     val focusedPillColor = Color(0xFF9B0F0F)
                     val tabRingColor = c.accent
+
+                    // InteractionSource drives focus visuals
+                    val tabIS = remember { MutableInteractionSource() }
+                    val hasFocus by tabIS.collectIsFocusedAsState()
+
+                    // Notify external listener when focus changes for this tab
+                    LaunchedEffect(hasFocus) {
+                        onTabFocusChanged?.invoke(index, hasFocus)
+                    }
 
                     // Text color: focused primary, otherwise secondary
                     val textColor = if (hasFocus) c.onSurface else c.textSecondary
@@ -313,7 +325,6 @@ fun HomeHeader(
                                     traversalIndex = 1f + index.toFloat()
                                 }
                                 .then(if (frForTab != null) Modifier.focusRequester(frForTab) else Modifier)
-                                .focusable()
                                 .focusProperties {
                                     left = if (index == 0) searchFR else {
                                         if (index - 1 in internalTabFRs.indices) internalTabFRs[index - 1] else firstTabFR
@@ -323,12 +334,10 @@ fun HomeHeader(
                                     }
                                     down = downDestination ?: FocusRequester.Default
                                 }
-                                .onFocusChanged {
-                                    hasFocus = it.isFocused
-                                    onTabFocusChanged?.invoke(index, it.isFocused)
-                                }
+                                .focusTarget() // explicit focus node
+                                .focusable(interactionSource = tabIS) // connect focus updates to the interactionSource
                                 .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
+                                    interactionSource = tabIS,
                                     indication = null
                                 ) { onTabSelected(index, item) }
                                 .onKeyEvent { ev ->
@@ -373,7 +382,8 @@ fun HomeHeader(
         }
 
         // Avatar halo (decorative)
-        var avatarFocused by remember { mutableStateOf(false) }
+        val avatarIS = remember { MutableInteractionSource() }
+        val avatarFocused by avatarIS.collectIsFocusedAsState()
         val haloAlpha = if (avatarFocused) 0.2f else 0.0001f
         Box(
             modifier = Modifier
@@ -401,20 +411,20 @@ fun HomeHeader(
                     traversalIndex = avatarTraversalIndex
                 }
                 .focusRequester(avatarFR)
-                .focusable()
                 .focusProperties {
                     left = lastTabFR
                     right = searchFR
                     down = downDestination ?: FocusRequester.Default
                 }
-                .onFocusChanged { avatarFocused = it.isFocused }
+                .focusTarget()
+                .focusable(interactionSource = avatarIS)
                 .border(
                     width = if (avatarFocused) d.focusRingThickness else 0.dp,
                     color = if (avatarFocused) ringColor else Color.Transparent,
                     shape = CircleShape
                 )
                 .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
+                    interactionSource = avatarIS,
                     indication = null
                 ) { onAvatarClick() }
                 .onKeyEvent { ev ->
