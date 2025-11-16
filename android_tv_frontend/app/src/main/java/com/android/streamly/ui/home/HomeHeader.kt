@@ -27,6 +27,12 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -48,12 +54,11 @@ import com.android.streamly.ui.theme.StreamlyTheme
 /**
  * PUBLIC_INTERFACE
  * HomeHeader
- * Resized and centered header for Android TV:
- * - Top nav container is fixed to 579.5dp x 32dp, horizontally centered (no clipping)
- * - Internal elements scaled to fit the 32dp height (capsule ~28dp with 14dp radius)
- * - Tabs spaced within the fixed width with small paddings so all labels (including "TV en vivo") fit
- * - "Claro video" is NOT part of the tabs; it is rendered as a separate label positioned at
- *   x=44.36.dp and y=25.9063.dp relative to the header container.
+ * Resized and centered header for Android TV with DPAD navigation:
+ * - Top nav container is fixed to 579.5dp x 32dp, centered
+ * - All nav items (Search, tabs, Avatar) are focusable with explicit left/right chaining
+ * - Visual focus state via border ring or highlight
+ * - Handles DPAD_LEFT/RIGHT to move focus across Search -> Tabs -> Avatar and back
  *
  * Accessibility:
  * - Decorative shapes are removed from the a11y tree
@@ -117,40 +122,28 @@ fun HomeHeader(
         // Compute dynamic horizontal centering for "Claro video" between left edge and navbar's left edge.
         // We keep the navbar fixed at 579.5.dp x 32.dp and centered; then compute the midpoint to place the label centered on it.
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-            // Available width inside safe margins (since HomeScaffold applies padding)
             val availableW = this.maxWidth
-            // Navbar is centered; its left edge is (availableW - navWidth) / 2
             val navLeft = (availableW - navWidth) / 2
-            // Midpoint between left edge (0.dp) and navbar's left edge
             val midBetweenLeftAndNav = navLeft / 2
 
-            // Track measured text width to center the label at the midpoint
             var labelTextWidthPx by remember { mutableStateOf(0) }
             val labelTextWidthDp: Dp = with(density) { labelTextWidthPx.toDp() }
 
-            // Preserve vertical offset and font size requirements
             val labelYOffset = 25.9063.dp
 
             BasicText(
                 text = "Claro video",
                 modifier = Modifier
-                    // Center the label horizontally around the computed midpoint
                     .offset(
                         x = (midBetweenLeftAndNav - (labelTextWidthDp / 2)).coerceAtLeast(0.dp),
                         y = labelYOffset
                     )
-                    .semantics {
-                        // Non-interactive label; keep in a11y tree as static text
-                        contentDescription = "Claro video"
-                    },
-                onTextLayout = { layout ->
-                    labelTextWidthPx = layout.size.width
-                },
+                    .semantics { contentDescription = "Claro video" },
+                onTextLayout = { layout -> labelTextWidthPx = layout.size.width },
                 style = t.titleL.merge(
                     TextStyle(
                         color = c.textPrimary,
                         textAlign = TextAlign.Start,
-                        // Requirement: set this separate label to 15.sp
                         fontSize = 15.sp
                     )
                 )
@@ -174,7 +167,7 @@ fun HomeHeader(
                     .clearAndSetSemantics { /* decorative */ }
             )
 
-            // Tabs row centered within the capsule, with tight spacing to fit within 579.5dp
+            // Tabs row centered within the capsule
             val labelHPad = 6.dp
             val capsuleHPad = 12.dp
 
@@ -183,9 +176,9 @@ fun HomeHeader(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 8.dp) // inner padding so content doesn't touch edges
+                    .padding(horizontal = 8.dp)
             ) {
-                // Search button INSIDE the capsule as the first item
+                // Search button
                 var searchFocused by remember { mutableStateOf(false) }
                 val ringColor = c.accent
                 Box(
@@ -214,9 +207,20 @@ fun HomeHeader(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null
                         ) { onSearchClick() }
+                        .onKeyEvent { ev ->
+                            if (ev.type != KeyEventType.KeyDown) return@onKeyEvent false
+                            when (ev.key) {
+                                Key.DirectionRight -> {
+                                    firstTabFR.requestFocus(); true
+                                }
+                                Key.DirectionLeft -> {
+                                    avatarFR.requestFocus(); true
+                                }
+                                else -> false
+                            }
+                        }
                         .background(color = Color.Transparent)
                 ) {
-                    // Simple magnifying glass icon (drawn)
                     Canvas(
                         modifier = Modifier
                             .size(20.dp)
@@ -253,7 +257,6 @@ fun HomeHeader(
                     var textWidthPx by remember { mutableStateOf(0) }
                     val textWidthDp: Dp = with(density) { textWidthPx.toDp() }
 
-                    // Capsule geometry relative to 32dp height
                     val capsuleH = 28.dp
                     val capsuleRadius = 14.dp
                     val capsuleW = (textWidthDp + capsuleHPad).coerceAtLeast(44.dp)
@@ -272,7 +275,6 @@ fun HomeHeader(
                         else -> null
                     }
 
-                    // Each tab container uses intrinsic width; overall row uses tight spacing
                     Box(
                         modifier = Modifier
                             .height(capsuleH)
@@ -294,7 +296,7 @@ fun HomeHeader(
                                 )
                                 .clearAndSetSemantics { /* decorative */ }
                         )
-                        // Active backdrop (under text)
+                        // Active backdrop
                         if (isActive) {
                             Box(
                                 modifier = Modifier
@@ -308,7 +310,7 @@ fun HomeHeader(
                             )
                         }
 
-                        // Tab text with small size override to ensure fit within 32dp height
+                        // Tab focusable text
                         BasicText(
                             text = item.title,
                             modifier = Modifier
@@ -319,7 +321,6 @@ fun HomeHeader(
                                     selected = isActive
                                     contentDescription = item.title
                                     stateDescription = if (isActive) "seleccionada" else "no seleccionada"
-                                    // Tabs follow search (0f), so start at 1f
                                     traversalIndex = 1f + index.toFloat()
                                 }
                                 .then(if (frForTab != null) Modifier.focusRequester(frForTab) else Modifier)
@@ -340,15 +341,32 @@ fun HomeHeader(
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null
-                                ) {
-                                    onTabSelected(index, item)
+                                ) { onTabSelected(index, item) }
+                                .onKeyEvent { ev ->
+                                    if (ev.type != KeyEventType.KeyDown) return@onKeyEvent false
+                                    when (ev.key) {
+                                        Key.DirectionLeft -> {
+                                            if (index == 0) {
+                                                searchFR.requestFocus()
+                                            } else {
+                                                internalTabFRs.getOrNull(index - 1)?.requestFocus()
+                                            }
+                                            true
+                                        }
+                                        Key.DirectionRight -> {
+                                            if (index == items.lastIndex) {
+                                                avatarFR.requestFocus()
+                                            } else {
+                                                internalTabFRs.getOrNull(index + 1)?.requestFocus()
+                                            }
+                                            true
+                                        }
+                                        else -> false
+                                    }
                                 },
-                            onTextLayout = { layout ->
-                                textWidthPx = layout.size.width
-                            },
+                            onTextLayout = { layout -> textWidthPx = layout.size.width },
                             style = (if (isActive) t.navActive else t.nav).merge(
                                 TextStyle(
-                                    // Override font size minimally to ensure fit within 32dp height
                                     fontSize = 16.sp,
                                     lineHeight = 20.sp,
                                     color = textColor,
@@ -365,7 +383,7 @@ fun HomeHeader(
             }
         }
 
-        // Avatar halo (decorative) aligned to end
+        // Avatar halo (decorative)
         var avatarFocused by remember { mutableStateOf(false) }
         val haloAlpha = if (avatarFocused) 0.2f else 0.0001f
         Box(
@@ -378,7 +396,7 @@ fun HomeHeader(
                 .clearAndSetSemantics { /* decorative */ }
         )
 
-        // Avatar aligned to end
+        // Avatar
         val ringColor = c.accent
         Box(
             modifier = Modifier
@@ -410,6 +428,18 @@ fun HomeHeader(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
                 ) { onAvatarClick() }
+                .onKeyEvent { ev ->
+                    if (ev.type != KeyEventType.KeyDown) return@onKeyEvent false
+                    when (ev.key) {
+                        Key.DirectionLeft -> {
+                            lastTabFR.requestFocus(); true
+                        }
+                        Key.DirectionRight -> {
+                            searchFR.requestFocus(); true
+                        }
+                        else -> false
+                    }
+                }
         )
 
         // Auto focus first tab if requested
