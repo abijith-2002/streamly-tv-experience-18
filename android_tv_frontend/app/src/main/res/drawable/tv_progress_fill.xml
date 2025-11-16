@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TV progress fill: #de1717, radius 1.6dp -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@android:id/progress">
+        <shape>
+            <solid android:color="@color/progress_fill" />
+            <corners android:radius="2dp" />
+        </shape>
+    </item>
+</layer-list>

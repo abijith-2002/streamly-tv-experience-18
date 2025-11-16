@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+    TV Channel Card Layout
+    Dimensions: 745x212dp
+    Thumbnail: 377x212dp (left side)
+    Info section: Right side with title, channel, time, live badge
+    Live badge: #eb0045, radius 3.81dp
+    Play button: 91.69dp diameter circle, #c60000
+    Progress bar: #de1717 fill, #2c2c2c track (80% opacity), radius 2.4dp/1.6dp
+-->
+<androidx.cardview.widget.CardView 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/tv_card_container"
+    android:layout_width="745dp"
+    android:layout_height="212dp"
+    android:layout_marginEnd="82dp"
+    app:cardBackgroundColor="@android:color/transparent"
+    app:cardCornerRadius="0dp"
+    app:cardElevation="0dp"
+    android:focusable="true"
+    android:clickable="true">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- Thumbnail Image -->
+        <ImageView
+            android:id="@+id/tv_thumbnail"
+            android:layout_width="377dp"
+            android:layout_height="212dp"
+            android:scaleType="centerCrop"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Rental Tag (Alquilá) - positioned top-left of thumbnail -->
+        <TextView
+            android:id="@+id/tv_rental_tag"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="18dp"
+            android:layout_marginTop="17dp"
+            android:text="Alquilá"
+            android:textColor="@color/rental_tag_text"
+            android:textSize="11sp"
+            android:fontFamily="sans-serif-medium"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:background="@drawable/rental_tag_bg"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="@id/tv_thumbnail"
+            app:layout_constraintTop_toTopOf="@id/tv_thumbnail" />
+
+        <!-- Play Button Overlay (centered on thumbnail) -->
+        <ImageView
+            android:id="@+id/tv_play_button"
+            android:layout_width="92dp"
+            android:layout_height="92dp"
+            android:src="@drawable/ic_play_circle"
+            android:contentDescription="@string/play"
+            android:focusable="true"
+            android:clickable="true"
+            app:layout_constraintStart_toStartOf="@id/tv_thumbnail"
+            app:layout_constraintEnd_toEndOf="@id/tv_thumbnail"
+            app:layout_constraintTop_toTopOf="@id/tv_thumbnail"
+            app:layout_constraintBottom_toBottomOf="@id/tv_thumbnail" />
+
+        <!-- Progress Bar (bottom-left of thumbnail) -->
+        <FrameLayout
+            android:id="@+id/tv_progress_container"
+            android:layout_width="207dp"
+            android:layout_height="10dp"
+            android:layout_marginStart="15dp"
+            android:layout_marginBottom="9dp"
+            android:background="@drawable/tv_progress_track"
+            app:layout_constraintStart_toStartOf="@id/tv_thumbnail"
+            app:layout_constraintBottom_toBottomOf="@id/tv_thumbnail">
+
+            <ProgressBar
+                android:id="@+id/tv_progress"
+                style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="9dp"
+                android:layout_gravity="center"
+                android:layout_marginStart="1dp"
+                android:layout_marginEnd="1dp"
+                android:max="100"
+                android:progress="38"
+                android:progressDrawable="@drawable/tv_progress_fill" />
+        </FrameLayout>
+
+        <!-- Info Section (right side) -->
+        <LinearLayout
+            android:id="@+id/info_section"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="31dp"
+            android:orientation="vertical"
+            android:paddingTop="12dp"
+            app:layout_constraintStart_toEndOf="@id/tv_thumbnail"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <!-- Title: typo_25 - Roboto 36sp Bold -->
+            <TextView
+                android:id="@+id/tv_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/tv_primary"
+                android:textSize="36sp"
+                android:fontFamily="sans-serif"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="TV Program Title" />
+
+            <!-- Channel: typo_26 - Roboto 30sp Regular -->
+            <TextView
+                android:id="@+id/tv_channel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:textColor="@color/tv_primary"
+                android:textSize="30sp"
+                android:fontFamily="sans-serif"
+                android:text="004 | Channel Name" />
+
+            <!-- Meta section (TV icon + Live badge) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <!-- TV Icon -->
+                <ImageView
+                    android:id="@+id/tv_icon"
+                    android:layout_width="33dp"
+                    android:layout_height="28dp"
+                    android:src="@drawable/ic_tv"
+                    android:contentDescription="TV" />
+
+                <!-- Live Badge: typo_27 - Roboto 21.33sp Medium, #eb0045 bg -->
+                <TextView
+                    android:id="@+id/tv_live_badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:text="@string/live"
+                    android:textColor="@color/tv_primary"
+                    android:textSize="21sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:paddingTop="6dp"
+                    android:paddingBottom="6dp"
+                    android:background="@drawable/live_badge_bg"
+                    android:visibility="visible" />
+            </LinearLayout>
+
+            <!-- Time: typo_26 - Roboto 30sp Regular -->
+            <TextView
+                android:id="@+id/tv_time"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:textColor="@color/tv_primary"
+                android:textSize="30sp"
+                android:fontFamily="sans-serif"
+                android:text="11:30 - 12:30" />
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.cardview.widget.CardView>

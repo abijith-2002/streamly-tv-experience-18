@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Progress bar track (large): #2c2c2c, radius 9.2dp -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/progress_track" />
+    <corners android:radius="9dp" />
+</shape>

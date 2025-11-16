@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+    Home Page Layout - Native Android TV Implementation
+    Dimensions: 1920x1080 (Full HD TV)
+    Background: #121212 (color_121212)
+    
+    Sections:
+    1. Header (y:36dp) - Logo + Navigation Bar
+    2. Hero Banner (y:152dp) - Large highlight image
+    3. Seguí viendo (y:632dp) - Continue watching rail
+    4. Canales de TV (y:1040dp) - TV channels rail
+-->
+<androidx.constraintlayout.widget.ConstraintLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/tv_background"
+    android:focusable="false">
+
+    <!-- HEADER SECTION -->
+    <!-- Logo: Position x:88.72dp, y:36dp from design -->
+    <ImageView
+        android:id="@+id/app_logo"
+        android:layout_width="170dp"
+        android:layout_height="34dp"
+        android:src="@drawable/claro_logo"
+        android:contentDescription="@string/app_name"
+        android:layout_marginStart="89dp"
+        android:layout_marginTop="36dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Navigation Bar Container: Position x:356dp, y:49dp, size:1159x74dp -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/nav_bar_container"
+        android:layout_width="1159dp"
+        android:layout_height="74dp"
+        android:layout_marginStart="356dp"
+        android:layout_marginTop="49dp"
+        app:cardBackgroundColor="@color/nav_bar_bg"
+        app:cardCornerRadius="34dp"
+        app:cardElevation="0dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <!-- Horizontal RecyclerView for navigation items -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/nav_recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginStart="110dp"
+            android:layout_marginTop="19dp"
+            android:clipToPadding="false"
+            android:paddingEnd="24dp"
+            android:orientation="horizontal"
+            tools:itemCount="6"
+            tools:listitem="@layout/item_navigation" />
+    </androidx.cardview.widget.CardView>
+
+    <!-- Search Icon: Position x:380dp, y:67dp -->
+    <ImageView
+        android:id="@+id/search_icon"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_marginStart="380dp"
+        android:layout_marginTop="67dp"
+        android:src="@drawable/ic_search"
+        android:contentDescription="@string/search"
+        android:focusable="true"
+        android:clickable="true"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- User Avatar: Position x:1435dp, y:57dp, size:56x56dp -->
+    <ImageView
+        android:id="@+id/user_avatar"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_marginStart="1435dp"
+        android:layout_marginTop="57dp"
+        android:src="@drawable/figma_image_1_231"
+        android:contentDescription="@string/user_profile"
+        android:focusable="true"
+        android:clickable="true"
+        android:scaleType="centerCrop"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- HERO BANNER SECTION -->
+    <!-- Center highlight image: Position x:88dp, y:152dp, size:1744x444dp -->
+    <ImageView
+        android:id="@+id/hero_banner"
+        android:layout_width="1744dp"
+        android:layout_height="444dp"
+        android:layout_marginStart="88dp"
+        android:layout_marginTop="152dp"
+        android:src="@drawable/figma_image_1_13"
+        android:contentDescription="@string/hero_highlight"
+        android:scaleType="centerCrop"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- CONTINUE WATCHING SECTION -->
+    <!-- Section Title: Position x:88dp, y:632dp -->
+    <TextView
+        android:id="@+id/continue_watching_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="88dp"
+        android:layout_marginTop="632dp"
+        android:text="@string/continue_watching"
+        android:textColor="@color/tv_primary"
+        android:textSize="32sp"
+        android:fontFamily="sans-serif"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Horizontal RecyclerView for movie cards -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/continue_watching_recycler"
+        android:layout_width="0dp"
+        android:layout_height="368dp"
+        android:layout_marginStart="57dp"
+        android:layout_marginTop="688dp"
+        android:clipToPadding="false"
+        android:paddingEnd="48dp"
+        android:orientation="horizontal"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:itemCount="5"
+        tools:listitem="@layout/item_movie_card" />
+
+    <!-- TV CHANNELS SECTION -->
+    <!-- Section Title: Position x:88dp, y:1040dp -->
+    <TextView
+        android:id="@+id/tv_channels_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="88dp"
+        android:layout_marginTop="1040dp"
+        android:text="@string/tv_channels"
+        android:textColor="@color/tv_primary"
+        android:textSize="32sp"
+        android:fontFamily="sans-serif"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Horizontal RecyclerView for TV channel cards -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/tv_channels_recycler"
+        android:layout_width="0dp"
+        android:layout_height="277dp"
+        android:layout_marginStart="89dp"
+        android:layout_marginTop="1096dp"
+        android:clipToPadding="false"
+        android:paddingEnd="48dp"
+        android:orientation="horizontal"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:itemCount="3"
+        tools:listitem="@layout/item_tv_channel_card" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

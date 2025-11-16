@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+    Movie Card Layout (Standard)
+    Dimensions: 412x312dp
+    Image: 412x232dp
+    Progress bar: #de1717 fill, #2c2c2c track, radius 8dp/4dp
+    Title container: #323131 background, 80dp height
+    Title typography: typo_23 - Roboto 30sp Medium, #ffffff
+-->
+<androidx.cardview.widget.CardView 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/movie_card_container"
+    android:layout_width="412dp"
+    android:layout_height="312dp"
+    android:layout_marginEnd="40dp"
+    app:cardBackgroundColor="@android:color/transparent"
+    app:cardCornerRadius="0dp"
+    app:cardElevation="0dp"
+    android:focusable="true"
+    android:clickable="true">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- Movie Poster Image -->
+        <ImageView
+            android:id="@+id/movie_poster"
+            android:layout_width="412dp"
+            android:layout_height="232dp"
+            android:scaleType="centerCrop"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Progress Bar Container -->
+        <FrameLayout
+            android:id="@+id/progress_container"
+            android:layout_width="379dp"
+            android:layout_height="16dp"
+            android:layout_marginStart="17dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/progress_track"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="@id/movie_poster">
+
+            <!-- Progress Fill -->
+            <ProgressBar
+                android:id="@+id/movie_progress"
+                style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="8dp"
+                android:layout_gravity="center"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:max="100"
+                android:progress="40"
+                android:progressDrawable="@drawable/progress_fill" />
+        </FrameLayout>
+
+        <!-- Title Container -->
+        <LinearLayout
+            android:id="@+id/title_container"
+            android:layout_width="412dp"
+            android:layout_height="80dp"
+            android:background="@color/card_title_bg"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/movie_poster">
+
+            <TextView
+                android:id="@+id/movie_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="@color/tv_primary"
+                android:textSize="30sp"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="Movie Title" />
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.cardview.widget.CardView>

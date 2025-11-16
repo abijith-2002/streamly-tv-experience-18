@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Progress fill (large): #de1717, radius 4.6dp -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@android:id/progress">
+        <shape>
+            <solid android:color="@color/progress_fill" />
+            <corners android:radius="5dp" />
+        </shape>
+    </item>
+</layer-list>

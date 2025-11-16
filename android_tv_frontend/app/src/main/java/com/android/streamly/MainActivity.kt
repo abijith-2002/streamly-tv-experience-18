@@ -2,43 +2,26 @@ package com.android.streamly
 
 import android.os.Bundle
 import androidx.fragment.app.FragmentActivity
-import android.view.KeyEvent
-import android.widget.TextView
 
 /**
- * Main Activity for Android TV
- * Extends FragmentActivity for Leanback compatibility
+ * PUBLIC_INTERFACE
+ * Main Activity for Android TV - Streamly
+ * 
+ * Extends FragmentActivity for Leanback compatibility.
+ * Loads HomeFragment which implements the native TV home page
+ * with pixel-perfect design matching Figma specifications.
  */
 class MainActivity : FragmentActivity() {
-
-    private lateinit var titleText: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        titleText = findViewById(R.id.title_text)
-        // Use the app_name string resource to present the title
-        titleText.text = getString(R.string.app_name)
-
-        // TODO: Initialize your rating screen components here
-        // setupRatingOverlay()
-    }
-
-    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        // Handle TV remote control inputs
-        return when (keyCode) {
-            KeyEvent.KEYCODE_DPAD_CENTER,
-            KeyEvent.KEYCODE_ENTER -> {
-                // Handle SELECT/OK button
-                true
-            }
-            KeyEvent.KEYCODE_BACK -> {
-                // Handle BACK button
-                finish()
-                true
-            }
-            else -> super.onKeyDown(keyCode, event)
+        // Load HomeFragment on initial creation
+        if (savedInstanceState == null) {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, HomeFragment())
+                .commit()
         }
     }
 }

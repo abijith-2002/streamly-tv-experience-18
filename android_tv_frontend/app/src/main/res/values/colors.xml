@@ -1,24 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- TV optimized colors -->
+    <!-- TV optimized colors from design system (common.css) -->
+    
+    <!-- Base colors -->
     <color name="tv_background">#121212</color>
     <color name="colorBackground">#121212</color>
     <color name="tv_overlay">#CC000000</color>
 
-    <!-- Primary text on dark -->
+    <!-- Text colors -->
     <color name="tv_primary">#FFFFFF</color>
     <color name="tv_secondary">#CCCCCC</color>
-
-    <!-- Accent updated to Streamly red -->
+    
+    <!-- Accent colors -->
     <color name="tv_accent">#E1251B</color>
-
-    <!-- Button states (kept referencing theme text colors where possible) -->
-    <color name="tv_button_focused">#FFFFFF</color>
-    <color name="tv_button_normal">#80FFFFFF</color>
-
-    <!-- Optional Material-like semantic mapping to ensure wide attribute support -->
     <color name="colorPrimary">#E1251B</color>
     <color name="colorSecondary">#E1251B</color>
     <color name="colorOnPrimary">#FFFFFF</color>
     <color name="colorOnSecondary">#FFFFFF</color>
+
+    <!-- Navigation colors -->
+    <color name="nav_bar_bg">#28292F</color>
+    <color name="nav_active_bg">#9B0F0F</color>
+    <color name="nav_inactive">#7F8282</color>
+
+    <!-- Card colors -->
+    <color name="card_title_bg">#323131</color>
+    <color name="card_track_bg">#2C2C2C</color>
+    
+    <!-- Progress colors -->
+    <color name="progress_fill">#DE1717</color>
+    <color name="progress_track">#2C2C2C</color>
+
+    <!-- Live badge -->
+    <color name="live_badge_bg">#EB0045</color>
+
+    <!-- Play button -->
+    <color name="play_button_bg">#C60000</color>
+
+    <!-- Rental tag -->
+    <color name="rental_tag_bg">#FFFFFF</color>
+    <color name="rental_tag_text">#000000</color>
+
+    <!-- Additional colors from design system -->
+    <color name="color_d8d8d8">#D8D8D8</color>
+    <color name="color_979797">#979797</color>
+    <color name="color_414141">#414141</color>
+    <color name="color_477f9b">#477F9B</color>
+    <color name="color_8d4ca7">#8D4CA7</color>
+    <color name="color_4271d4">#4271D4</color>
+    <color name="color_f80000">#F80000</color>
+    <color name="color_000000">#000000</color>
+    <color name="color_e84444">#E84444</color>
+    <color name="color_656767">#656767</color>
+    <color name="color_dadada">#DADADA</color>
+    <color name="color_ababab">#ABABAB</color>
+    <color name="color_e51a1a">#E51A1A</color>
+    <color name="color_3f9321">#3F9321</color>
+    <color name="color_f4f4f4">#F4F4F4</color>
+    <color name="color_282828">#282828</color>
 </resources>

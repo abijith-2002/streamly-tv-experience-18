@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TV progress track: #2c2c2c with 80% opacity, radius 2.4dp -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#CC2C2C2C" />
+    <corners android:radius="2dp" />
+</shape>

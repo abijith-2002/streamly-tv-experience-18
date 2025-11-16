@@ -2,12 +2,28 @@
 <resources>
     <string name="app_name">Streamly</string>
 
+    <!-- Home Page Strings -->
+    <string name="continue_watching">Seguí viendo</string>
+    <string name="tv_channels">Canales de TV</string>
+    <string name="search">Buscar</string>
+    <string name="user_profile">Perfil de usuario</string>
+    <string name="hero_highlight">Contenido destacado</string>
+    <string name="live">EN VIVO</string>
+    <string name="play">Reproducir</string>
+
+    <!-- Navigation Items -->
+    <string name="nav_inicio">Inicio</string>
+    <string name="nav_peliculas">Películas</string>
+    <string name="nav_series">Series</string>
+    <string name="nav_tv_vivo">TV en vivo</string>
+    <string name="nav_kids">Kids</string>
+    <string name="nav_mis_contenidos">Mis Contenidos</string>
+
     <!-- Rating Screen Strings -->
     <string name="rating_title">Did you like it?</string>
     <string name="rating_message">Your vote helps us recommend more content like this.</string>
     <string name="rating_like">I like it</string>
     <string name="rating_love">I love it</string>
-    <!-- Avoid apostrophes entirely to bypass unicode escape parsing -->
     <string name="rating_dislike">I do not like it</string>
     <string name="rating_close">Close</string>
     <string name="rating_countdown">Closing in %d seconds</string>

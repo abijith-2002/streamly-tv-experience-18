@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+    Navigation Item Layout
+    Typography: typo_28 (inactive) - Roboto 29sp Regular, #7f8282
+                typo_29 (active) - Roboto 29sp Bold, #ffffff
+    Active background: #9b0f0f, radius 37dp
+-->
+<androidx.cardview.widget.CardView 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_item_container"
+    android:layout_width="wrap_content"
+    android:layout_height="53dp"
+    android:layout_marginEnd="48dp"
+    app:cardBackgroundColor="@android:color/transparent"
+    app:cardCornerRadius="0dp"
+    app:cardElevation="0dp"
+    android:focusable="true"
+    android:clickable="true">
+
+    <TextView
+        android:id="@+id/nav_item_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:textColor="@color/nav_inactive"
+        android:textSize="29sp"
+        android:fontFamily="sans-serif"
+        android:text="Inicio" />
+
+</androidx.cardview.widget.CardView>

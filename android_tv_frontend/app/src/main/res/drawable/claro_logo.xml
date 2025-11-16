@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Claro Video logo placeholder as vector drawable -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="170dp"
+    android:height="34dp"
+    android:viewportWidth="170"
+    android:viewportHeight="34">
+    
+    <!-- Background rectangle with accent color -->
+    <path
+        android:fillColor="@color/tv_accent"
+        android:pathData="M0,5 L60,5 L60,29 L0,29 Z" />
+    
+    <!-- "CLARO" text represented as rectangles (simplified) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M5,10 L15,10 L15,24 L5,24 Z
+                          M20,10 L25,10 L25,24 L20,24 Z
+                          M30,10 L40,10 L40,15 L30,15 Z
+                          M30,19 L40,19 L40,24 L30,24 Z
+                          M45,10 L55,10 L55,15 L50,15 L50,19 L55,19 L55,24 L45,24 Z" />
+    
+    <!-- "video" text area -->
+    <path
+        android:fillColor="@color/tv_accent"
+        android:fillAlpha="0.8"
+        android:pathData="M70,12 L120,12 L120,22 L70,22 Z" />
+</vector>

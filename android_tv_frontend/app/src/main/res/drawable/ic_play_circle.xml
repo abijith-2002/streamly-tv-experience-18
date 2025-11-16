@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Play button: 92dp circle, #c60000 background -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Circle background -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="@color/play_button_bg" />
+            <size android:width="92dp" android:height="92dp" />
+        </shape>
+    </item>
+    
+    <!-- Play icon (triangle) -->
+    <item android:gravity="center">
+        <vector
+            android:width="40dp"
+            android:height="42dp"
+            android:viewportWidth="40"
+            android:viewportHeight="42">
+            <path
+                android:fillColor="#FFFFFF"
+                android:pathData="M5,5 L35,21 L5,37 Z" />
+        </vector>
+    </item>
+</layer-list>
