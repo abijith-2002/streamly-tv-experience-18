@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.cardview.widget.CardView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 
 /**
@@ -55,22 +56,22 @@ class NavigationAdapter(
         if (isActive) {
             // Active state: typo_29 - Roboto 29sp Bold, #ffffff, background #9b0f0f
             holder.container.setCardBackgroundColor(
-                holder.itemView.context.getColor(R.color.nav_active_bg)
+                ContextCompat.getColor(holder.itemView.context, R.color.nav_active_bg)
             )
             holder.container.radius = 37f
             holder.textView.setTextColor(
-                holder.itemView.context.getColor(R.color.tv_primary)
+                ContextCompat.getColor(holder.itemView.context, R.color.tv_primary)
             )
             holder.textView.textSize = 29f
             holder.textView.setTypeface(null, android.graphics.Typeface.BOLD)
         } else {
             // Inactive state: typo_28 - Roboto 29sp Regular, #7f8282, transparent
             holder.container.setCardBackgroundColor(
-                holder.itemView.context.getColor(android.R.color.transparent)
+                ContextCompat.getColor(holder.itemView.context, android.R.color.transparent)
             )
             holder.container.radius = 0f
             holder.textView.setTextColor(
-                holder.itemView.context.getColor(R.color.nav_inactive)
+                ContextCompat.getColor(holder.itemView.context, R.color.nav_inactive)
             )
             holder.textView.textSize = 29f
             holder.textView.setTypeface(null, android.graphics.Typeface.NORMAL)
