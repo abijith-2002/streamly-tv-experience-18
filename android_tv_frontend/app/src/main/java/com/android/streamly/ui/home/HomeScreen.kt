@@ -16,6 +16,7 @@ import com.android.streamly.model.home.HeroItem
 import com.android.streamly.model.home.NavItem
 import com.android.streamly.model.home.RailSection
 import com.android.streamly.ui.theme.StreamlyTheme
+import com.android.streamly.model.home.CardItem
 
 /**
  * PUBLIC_INTERFACE
@@ -53,6 +54,7 @@ fun HomeScreen(
     // Focus requesters for traversal boundaries
     val headerFirstTabFR = remember { FocusRequester() }
     val heroFR = remember { FocusRequester() }
+    val bannerFR = remember { FocusRequester() }
     val railEntryFRs = remember(rails.size) { List(rails.size) { FocusRequester() } }
 
     StreamlyTheme {
@@ -87,14 +89,30 @@ fun HomeScreen(
                         modifier = Modifier
                             .focusRequester(heroFR)
                             .focusProperties {
-                                // Up returns to header first tab, down goes to the first rail entry
+                                // Up returns to header first tab, down goes to the banner row
                                 up = headerFirstTabFR
-                                down = railEntryFRs.firstOrNull() ?: FocusRequester.Default
+                                down = bannerFR
                             },
                         upDestination = headerFirstTabFR,
-                        downDestination = railEntryFRs.firstOrNull(),
+                        downDestination = bannerFR,
                         onCtaClick = { /* TODO: navigate to playback/info */ }
                     )
+
+                    // Derive banners from a suitable rail (prefer "Populares", else first rail)
+                    val banners: List<CardItem> = remember(rails) {
+                        rails.firstOrNull { it.title.equals("Populares", ignoreCase = true) }?.items
+                            ?: rails.firstOrNull()?.items
+                            ?: emptyList()
+                    }
+
+                    if (banners.isNotEmpty()) {
+                        BannerCarousel(
+                            items = banners,
+                            entryFocusRequester = bannerFR,
+                            upDestination = heroFR,
+                            downDestination = railEntryFRs.firstOrNull()
+                        )
+                    }
 
                     // Rails - link focus between consecutive rails and bound last rail DOWN
                     rails.forEachIndexed { index, section ->
