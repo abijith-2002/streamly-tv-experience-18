@@ -57,6 +57,9 @@ import com.android.streamly.ui.theme.StreamlyTheme
  * Resized and centered header for Android TV with DPAD navigation:
  * - Top nav container is fixed to 579.5dp x 32dp, centered
  * - All nav items (Search, tabs, Avatar) are focusable with explicit left/right chaining
+ * - Pill background appears IMMEDIATELY on focus (no DPAD_CENTER required)
+ * - Pill is driven purely by focus state via collectIsFocusedAsState()
+ * - DPAD_CENTER only triggers selection callback (onTabSelected), not visual state
  * - Visual focus state via border ring or highlight
  * - Handles DPAD_LEFT/RIGHT to move focus across Search -> Tabs -> Avatar and back
  *
@@ -253,9 +256,10 @@ fun HomeHeader(
 
                 Spacer(Modifier.width(8.dp))
 
-                // Tabs
+                // Tabs - Pill appears IMMEDIATELY on focus via collectIsFocusedAsState()
                 items.forEachIndexed { index, item ->
-                    // Focus drives visuals; selected only updates semantics
+                    // isActive is used ONLY for semantics (selected state for screen readers)
+                    // It does NOT control the visual pill - only hasFocus does
                     val isActive = (index == activeIndex) || item.active
                     var textWidthPx by remember { mutableStateOf(0) }
                     val textWidthDp: Dp = with(density) { textWidthPx.toDp() }
@@ -269,7 +273,7 @@ fun HomeHeader(
                     val focusedPillColor = Color(0xFF9B0F0F)
                     val tabRingColor = c.accent
 
-                    // InteractionSource drives focus visuals
+                    // InteractionSource collects focus state - THIS drives the pill visibility
                     val tabIS = remember { MutableInteractionSource() }
                     val hasFocus by tabIS.collectIsFocusedAsState()
 
@@ -292,7 +296,9 @@ fun HomeHeader(
                             .height(capsuleH)
                             .wrapContentWidth()
                     ) {
-                        // Focus pill driven purely by focus state
+                        // FOCUS PILL: Driven PURELY by focus state (hasFocus)
+                        // Appears IMMEDIATELY when focus enters this tab via DPAD_LEFT/RIGHT
+                        // No DPAD_CENTER required - focus alone triggers the pill
                         if (hasFocus) {
                             Box(
                                 modifier = Modifier
@@ -334,12 +340,16 @@ fun HomeHeader(
                                     }
                                     down = downDestination ?: FocusRequester.Default
                                 }
-                                .focusTarget() // explicit focus node
-                                .focusable(interactionSource = tabIS) // connect focus updates to the interactionSource
+                                .focusTarget() // explicit focus node - NOT nested in another focusable
+                                .focusable(interactionSource = tabIS) // connect focus to interactionSource
                                 .clickable(
                                     interactionSource = tabIS,
                                     indication = null
-                                ) { onTabSelected(index, item) }
+                                ) { 
+                                    // DPAD_CENTER triggers selection callback ONLY
+                                    // Does NOT affect pill visibility - that's driven by focus
+                                    onTabSelected(index, item) 
+                                }
                                 .onKeyEvent { ev ->
                                     if (ev.type != KeyEventType.KeyDown) return@onKeyEvent false
                                     when (ev.key) {
