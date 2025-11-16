@@ -37,13 +37,6 @@ data class TvDimens(
     // Progress bar sizes
     val progressTrackHeight: Dp,
     val progressFillHeight: Dp,
-
-    // Banner carousel geometry
-    val bannerWidthFocused: Dp,
-    val bannerHeightFocused: Dp,
-    val bannerItemSpacing: Dp,
-    // Unfocused visual scale factor for banners (0.0..1.0)
-    val bannerScaleUnfocused: Float,
 )
 
 /**
@@ -67,12 +60,6 @@ val DefaultTvDimens = TvDimens(
 
     progressTrackHeight = 18.dp,
     progressFillHeight = 9.dp,
-
-    // Banner carousel
-    bannerWidthFocused = 872.dp,
-    bannerHeightFocused = 222.dp,
-    bannerItemSpacing = 20.dp,
-    bannerScaleUnfocused = 0.9f,
 )
 
 internal val LocalTvDimens = staticCompositionLocalOf { DefaultTvDimens }

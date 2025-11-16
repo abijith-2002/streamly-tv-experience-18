@@ -1,7 +1,6 @@
 package com.android.streamly.ui.home
 
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusGroup
@@ -25,20 +24,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -52,16 +50,17 @@ import androidx.compose.runtime.rememberCoroutineScope
 /**
  * PUBLIC_INTERFACE
  * BannerCarousel
- * TV-optimized banner carousel that:
- * - Uses fixed focused size 872.dp x 222.dp (from dimens) and centers the focused item horizontally.
- * - Applies a slight scale down (e.g., 0.9f from dimens) and lower elevation to unfocused items.
- * - Maintains exact inter-item spacing from dimens.
- * - Scrolls the focused item into the exact center using symmetric side padding.
+ * A TV-optimized banner carousel with:
+ * - Focused item size 872.dp x 222.dp, centered horizontally on focus
+ * - Unfocused items are visible as 34.dp-wide slivers, height 222.dp
+ * - Spacing between items is exactly 20.dp
+ * - Smooth focus transitions and D-Pad navigation (left/right), maintaining center alignment
+ * - Uses LazyRow + rememberLazyListState + animateScrollToItem with dynamic side padding
  *
  * Parameters:
  * - items: List of CardItem representing each banner (title used as contentDescription)
  * - modifier: Optional modifier for the row container
- * - entryFocusRequester: FocusRequester applied to the initially focusable item for DPAD entry into the row
+ * - entryFocusRequester: FocusRequester applied to the focused item when the carousel first receives focus
  * - upDestination: FocusRequester for DPAD_UP
  * - downDestination: FocusRequester for DPAD_DOWN
  */
@@ -76,9 +75,11 @@ fun BannerCarousel(
     val d = StreamlyTheme.dimens
     val c = StreamlyTheme.colors
 
-    val rowHeight = d.bannerHeightFocused
-    val itemWidth = d.bannerWidthFocused
-    val itemSpacing = d.bannerItemSpacing
+    // Fixed geometry as requested
+    val rowHeight = 222.dp
+    val focusedW = 872.dp
+    val unfocusedW = 34.dp
+    val itemSpacing = 20.dp
     val shape = RoundedCornerShape(StreamlyTheme.dimens.radiusMd)
 
     BoxWithConstraints(
@@ -87,16 +88,17 @@ fun BannerCarousel(
             .semantics { /* traversal group only; no special role */ }
     ) {
         val containerW: Dp = this.maxWidth
-        // Symmetric side padding so that the selected item aligns exactly in the horizontal center.
-        val sidePad = ((containerW - itemWidth) / 2).coerceAtLeast(0.dp)
+        // Content padding so that when we scroll an item to index it lands centered
+        val sidePad = ((containerW - focusedW) / 2).coerceAtLeast(0.dp)
 
         val listState = rememberLazyListState()
         var focusedIndex by remember { mutableIntStateOf(0) }
         val scope = rememberCoroutineScope()
 
+        // When focus changes to a particular index, scroll to center that item.
         LaunchedEffect(focusedIndex, containerW) {
             scope.launch {
-                // With constant item width and symmetric padding, index scrolling centers the item.
+                // With symmetric side padding, animateScrollToItem centers the item start into the padded viewport.
                 listState.animateScrollToItem(focusedIndex)
             }
         }
@@ -115,13 +117,16 @@ fun BannerCarousel(
                     card = card,
                     isFocusedItem = (index == focusedIndex),
                     rowHeight = rowHeight,
-                    itemWidth = itemWidth,
-                    onFocused = { focusedIndex = index },
+                    focusedWidth = focusedW,
+                    unfocusedWidth = unfocusedW,
+                    onFocused = {
+                        focusedIndex = index
+                    },
                     modifier = Modifier
                         .focusProperties {
                             up = upDestination ?: FocusRequester.Default
                             down = downDestination ?: FocusRequester.Default
-                            left = FocusRequester.Default
+                            left = FocusRequester.Default // handled by DPAD within row
                             right = FocusRequester.Default
                         }
                         .then(
@@ -134,8 +139,7 @@ fun BannerCarousel(
                     shape = shape,
                     borderColor = c.accent,
                     focusRingThickness = d.focusRingThickness,
-                    // Use a local unfocused scale to keep tokens only for banner sizing (requirement: 0.92–0.95)
-                    unfocusedScale = 0.94f
+                    spacing = itemSpacing
                 )
             }
         }
@@ -143,49 +147,45 @@ fun BannerCarousel(
 }
 
 /**
- * A single banner item with fixed layout size that scales and elevates on focus.
+ * A single banner item that animates its width between focused and unfocused sizes.
  */
 @Composable
 private fun BannerItem(
     card: CardItem,
     isFocusedItem: Boolean,
     rowHeight: Dp,
-    itemWidth: Dp,
+    focusedWidth: Dp,
+    unfocusedWidth: Dp,
     onFocused: () -> Unit,
     modifier: Modifier = Modifier,
     shape: RoundedCornerShape,
     borderColor: Color,
     focusRingThickness: Dp,
-    unfocusedScale: Float
+    spacing: Dp
 ) {
     val density = LocalDensity.current
     val context = LocalContext.current
 
     var hasFocus by remember { mutableStateOf(false) }
-    val targetScale = if (hasFocus || isFocusedItem) 1f else unfocusedScale
-    val animatedScale by animateFloatAsState(targetValue = targetScale, label = "bannerScaleAnim")
+    val targetWidth = if (hasFocus || isFocusedItem) focusedWidth else unfocusedWidth
+    val animatedWidth by animateDpAsState(targetValue = targetWidth, label = "bannerWidthAnim")
 
-    // Elevation: focused higher, unfocused lower
-    val targetElevation = if (hasFocus || isFocusedItem) 8.dp else 2.dp
-    val animatedElevation by animateDpAsState(targetValue = targetElevation, label = "bannerElevationAnim")
-
-    // Calculate pixel size for coil request based on the final drawn size (after scale).
-    val widthPx = with(density) { itemWidth.toPx() }.toInt().coerceAtLeast(1)
+    // Calculate pixel size for coil request
+    val widthPx = with(density) { animatedWidth.toPx() }.toInt().coerceAtLeast(1)
     val heightPx = with(density) { rowHeight.toPx() }.toInt().coerceAtLeast(1)
 
-    // Subtle alpha for unfocused state
-    val alpha = if (hasFocus) 1f else 0.95f
+    // Visual hint for non-focused items; optional subtle alpha
+    val alpha = if (hasFocus) 1f else 0.9f
 
     Box(
         modifier = modifier
-            .width(itemWidth)
+            .width(animatedWidth)
             .height(rowHeight)
             .onFocusChanged { f ->
                 hasFocus = f.isFocused
                 if (f.isFocused) onFocused()
             }
             .focusable()
-            .shadow(animatedElevation, shape = shape, clip = false)
             .border(
                 width = if (hasFocus) focusRingThickness else 0.dp,
                 color = if (hasFocus) borderColor else Color.Transparent,
@@ -195,6 +195,8 @@ private fun BannerItem(
             .semantics(mergeDescendants = true) {
                 role = Role.Button
             }
+            // Keep spacing to the right of each item except the last; use a trailing spacer effect
+        ,
     ) {
         val modelData = card.imageUrl ?: card.imageResId
         if (modelData != null) {
@@ -209,27 +211,18 @@ private fun BannerItem(
                     .build(),
                 contentDescription = card.title,
                 modifier = Modifier
-                    .size(width = itemWidth, height = rowHeight)
+                    .size(width = animatedWidth, height = rowHeight)
                     .background(color = Color.Transparent, shape = shape)
                     .clearAndSetSemantics { /* image is labeled by parent */ }
-                    .graphicsLayer(
-                        alpha = alpha,
-                        scaleX = animatedScale,
-                        scaleY = animatedScale
-                    ),
+                    .graphicsLayer(alpha = alpha),
                 contentScale = ContentScale.Crop
             )
         } else {
             // Fallback gradient box if no image; decorative
             Box(
                 modifier = Modifier
-                    .size(width = itemWidth, height = rowHeight)
+                    .size(width = animatedWidth, height = rowHeight)
                     .background(color = Color(0xFF323131), shape = shape)
-                    .graphicsLayer(
-                        alpha = alpha,
-                        scaleX = animatedScale,
-                        scaleY = animatedScale
-                    )
                     .clearAndSetSemantics { /* decorative */ }
             )
         }
